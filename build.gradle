@@ -9,7 +9,7 @@ plugins {
 }
 
 application {
-  mainClass = 'uk.gov.hmcts.reform.cron-trigger.Application'
+  mainClass = 'uk.gov.hmcts.reform.bsp.Application'
   group = 'uk.gov.hmcts.reform'
   version = '0.0.1'
 }

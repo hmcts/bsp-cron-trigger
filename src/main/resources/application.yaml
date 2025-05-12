@@ -18,10 +18,6 @@ springdoc:
 
 spring:
   config:
-    import: "optional:configtree:/mnt/secrets/bsp/"
+    import: "optional:configtree:/mnt/secrets/bulk-scan/"
   application:
     name: BSP Cron Trigger
-
-azure:
-  application-insights:
-    instrumentation-key: ${bsp.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
