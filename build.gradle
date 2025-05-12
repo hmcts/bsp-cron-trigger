@@ -20,29 +20,6 @@ java {
   }
 }
 
-def configureSourceSet(String name) {
-  sourceSets.create(name) { sourceSet ->
-    sourceSet.java {
-      compileClasspath += sourceSets.main.output + sourceSets.test.output
-      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
-      srcDir "src/${name}/java"
-    }
-    sourceSet.resources.srcDir "src/${name}/resources"
-  }
-}
-
-['smokeTest', 'integrationTest', 'functionalTest'].each { configureSourceSet(it) }
-
-configurations {
-  functionalTestImplementation.extendsFrom testImplementation
-  functionalTestRuntimeOnly.extendsFrom runtimeOnly
-
-  integrationTestImplementation.extendsFrom testImplementation
-  integrationTestRuntimeOnly.extendsFrom runtimeOnly
-
-  smokeTestImplementation.extendsFrom testImplementation
-  smokeTestRuntimeOnly.extendsFrom runtimeOnly
-}
 
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
@@ -62,30 +39,8 @@ tasks.withType(Test).configureEach {
   }
 }
 
-tasks.register('functional', Test) {
-  description = "Runs functional tests"
-  group = "Verification"
-  testClassesDirs = sourceSets.functionalTest.output.classesDirs
-  classpath = sourceSets.functionalTest.runtimeClasspath
-}
-
-tasks.register('integration', Test) {
-  description = "Runs integration tests"
-  group = "Verification"
-  testClassesDirs = sourceSets.integrationTest.output.classesDirs
-  classpath = sourceSets.integrationTest.runtimeClasspath
-  failFast = true
-}
-
-tasks.register('smoke', Test) {
-  description = "Runs Smoke Tests"
-  group = "Verification"
-  testClassesDirs = sourceSets.smokeTest.output.classesDirs
-  classpath = sourceSets.smokeTest.runtimeClasspath
-}
-
 jacocoTestReport {
-  executionData(test, integration)
+  executionData(test)
   reports {
     xml.getRequired().set(true)
     csv.getRequired().set(false)
@@ -94,7 +49,6 @@ jacocoTestReport {
 }
 
 tasks.sonarqube.dependsOn(jacocoTestReport)
-tasks.check.dependsOn(integration)
 
 sonarqube {
   properties {
@@ -142,10 +96,6 @@ bootJar {
   manifest {
     attributes('Implementation-Version': project.version.toString())
   }
-}
-
-rootProject.tasks.named("processSmokeTestResources") {
-  duplicatesStrategy = 'include'
 }
 
 wrapper {
