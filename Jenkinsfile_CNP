@@ -1,9 +1,5 @@
 #!groovy
 
-properties([
-  pipelineTriggers([cron('H 07 * * 1-5')])
-])
-
 @Library("Infrastructure")
 
 def type = "java"
@@ -11,6 +7,6 @@ def product = "bulk-scan"
 def component = "cron-trigger"
 def channel = '#bsp-build-notices'
 
-withNightlyPipeline(type, product, component) {
+withPipeline(type, product, component) {
   nonServiceApp()
 }
