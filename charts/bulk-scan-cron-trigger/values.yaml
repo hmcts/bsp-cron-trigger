@@ -1,5 +1,5 @@
 job:
-  image: 'hmctspublic.azurecr.io/bsp/cron-trigger:latest'
+  image: 'hmctspublic.azurecr.io/bulk-scan/cron-trigger:latest'
   aadIdentityName: bsp
   keyVaults:
     bulk-scan:
