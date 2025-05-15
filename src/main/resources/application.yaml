@@ -21,3 +21,10 @@ spring:
     import: "optional:configtree:/mnt/secrets/bulk-scan/"
   application:
     name: BSP Cron Trigger
+
+app:
+  trigger-type: ${TRIGGER_TYPE}
+
+
+url:
+  send-letter-service: ${SEND_LETTER_SERVICE_URL}
