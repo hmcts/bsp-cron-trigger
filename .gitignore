@@ -24,4 +24,10 @@ bin/main/application.yaml
 applicationinsights-agent-*.jar
 *.log
 
+.env/bin/setup-env.sh
+/bin/setup-sftp.sh
+/bin/create-env-file.sh
+/bin/setup-azurite.sh
+/bin/substitutions.json
 .env
+/bin/setup-env.sh
