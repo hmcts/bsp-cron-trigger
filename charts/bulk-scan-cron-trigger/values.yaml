@@ -4,6 +4,8 @@ job:
   keyVaults:
     bulk-scan:
       secrets:
+        - name: slack-token-bsp
+          alias: slack-token-bsp
         - name: app-insights-connection-string
           alias: app-insights-connection-string
   global:

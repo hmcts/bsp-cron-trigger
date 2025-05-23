@@ -31,22 +31,19 @@ public class ScheduleRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!EnumUtils.isValidEnum(ScheduleTypes.class, cronTimerProperties.getTriggerType())) {
-            log.error("Invalid or no schedule type set. Exiting");
-            System.exit(1);
-        }
-
-        ScheduleTypes triggerType = ScheduleTypes.valueOf(cronTimerProperties.getTriggerType());
-
-        Optional<? extends Trigger> foundTrigger =
-            triggers.stream().filter(trigger -> trigger.isApplicable(triggerType)).findFirst();
-
-        if (foundTrigger.isPresent()) {
-            foundTrigger.get().trigger();
-        } else {
-            log.error("Failed to find trigger. Exiting");
-            System.exit(1);
-        }
+        Optional.ofNullable(EnumUtils.getEnum(
+            ScheduleTypes.class,
+            cronTimerProperties.getTriggerType()
+        )).flatMap(type ->
+                       triggers.stream()
+                           .filter(t -> t.isApplicable(type))
+                           .findFirst()
+        ).ifPresentOrElse(
+            Trigger::trigger,
+            () -> {
+                log.error("Invalid or no schedule type set. Exiting");
+                System.exit(1);
+            }
+        );
     }
-
 }

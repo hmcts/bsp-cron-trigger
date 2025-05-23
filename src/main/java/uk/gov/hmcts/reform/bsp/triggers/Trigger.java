@@ -10,5 +10,4 @@ public interface Trigger {
     void trigger();
 
     boolean isApplicable(ScheduleTypes scheduleTypes);
-
 }

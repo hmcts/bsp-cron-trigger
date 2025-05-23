@@ -25,6 +25,9 @@ spring:
 app:
   trigger-type: ${TRIGGER_TYPE}
 
-
 url:
   send-letter-service: ${SEND_LETTER_SERVICE_URL}
+
+slack:
+  token-bsp: ${SLACK_TOKEN_BSP}
+  channel-id: ${SLACK_CHANNEL_TOKEN}
