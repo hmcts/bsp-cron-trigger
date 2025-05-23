@@ -10,6 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class SlackProperties {
-    private String tokenBsp;
-    private String channelId;
+    private String tokenDailyChecks;
+    private String channelIdDailyChecks;
 }
