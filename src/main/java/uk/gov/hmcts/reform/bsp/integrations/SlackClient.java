@@ -22,14 +22,14 @@ public class SlackClient {
     public void sendSlackMessage(String message) {
         try {
             ChatPostMessageResponse resp = Slack.getInstance()
-                .methods(properties.getTokenDailyChecks())
-                .chatPostMessage(r -> r
-                    .channel(properties.getChannelIdDailyChecks()   )
-                    .text(message)
-                );
+                    .methods(properties.getTokenDailyChecks())
+                    .chatPostMessage(r -> r
+                            .channel(properties.getChannelIdDailyChecks())
+                            .text(message)
+                    );
             if (!resp.isOk()) {
                 throw new IllegalStateException(
-                    "Slack API error: " + resp.getError()
+                        "Slack API error: " + resp.getError()
                 );
             }
         } catch (IOException | SlackApiException ex) {
