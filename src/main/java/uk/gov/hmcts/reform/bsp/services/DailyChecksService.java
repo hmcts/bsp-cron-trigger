@@ -17,8 +17,8 @@ public class DailyChecksService {
 
     public void runDailyChecks() {
         List<String> actions = List.of(
-            "Look at bulk print request that cannot be aborted. Id is blabla",
-            "Look at bulk print request that cannot be aborted. Id is blabla",
+            "Look at bulk print letter that cannot be aborted.",
+            "Look at bulk scan envelope that cannot be reprocessed.",
             "Send stand-up summary"
         );
 
