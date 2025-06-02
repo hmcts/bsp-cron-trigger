@@ -56,15 +56,11 @@ class SlackClientTest {
             Slack slackMock = mock(Slack.class);
             slackStatic.when(Slack::getInstance).thenReturn(slackMock);
             when(slackMock.methods(token)).thenReturn(methodsClient);
-
-            // stub exactly the configurator overload:
             when(methodsClient.chatPostMessage(anyConfigurator()))
                 .thenReturn(okResponse);
 
-            // Act
             client.sendSlackMessage("Hello, world!");
 
-            // Assert: capture & inspect the configurator
             verify(methodsClient).chatPostMessage(configuratorCaptor.capture());
             var configurator = configuratorCaptor.getValue();
             var builder      = ChatPostMessageRequest.builder();
