@@ -45,7 +45,6 @@ class SlackClientTest {
 
     @Test
     void sendSlackMessage_shouldSendCorrectPayload_whenOk() throws Exception {
-        // only stubbing what this test uses:
         when(properties.getTokenDailyChecks()).thenReturn(token);
         when(properties.getChannelIdDailyChecks()).thenReturn(channel);
         when(okResponse.isOk()).thenReturn(true);
