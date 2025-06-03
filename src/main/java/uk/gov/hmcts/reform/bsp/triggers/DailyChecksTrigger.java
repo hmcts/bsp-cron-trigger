@@ -21,6 +21,6 @@ public class DailyChecksTrigger implements Trigger {
 
     @Override
     public boolean isApplicable(ScheduleTypes scheduleTypes) {
-        return ScheduleTypes.BSP_DAILY_CHECKS.equals(scheduleTypes);
+        return ScheduleTypes.BS_DAILY_CHECKS.equals(scheduleTypes);
     }
 }
