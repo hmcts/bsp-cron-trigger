@@ -10,7 +10,7 @@ import uk.gov.hmcts.reform.bsp.triggers.Trigger;
  */
 @Getter
 public enum ScheduleTypes {
-    BSP_DAILY_CHECKS(DailyChecksTrigger.class),
+    BS_DAILY_CHECKS(DailyChecksTrigger.class),
     SEND_LETTER_HEALTH_CHECK(SendLetterHealthCheckTrigger.class);
 
     private final Class<? extends Trigger> triggerClass;

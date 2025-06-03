@@ -45,13 +45,13 @@ class DailyChecksTriggerTest {
 
     @Test
     void isApplicable_shouldReturnTrueForBspDailyChecks() {
-        assertTrue(trigger.isApplicable(ScheduleTypes.BSP_DAILY_CHECKS));
+        assertTrue(trigger.isApplicable(ScheduleTypes.BS_DAILY_CHECKS));
     }
 
     @Test
     void isApplicable_shouldReturnFalseForOtherTypes() {
         for (ScheduleTypes type : ScheduleTypes.values()) {
-            if (type != ScheduleTypes.BSP_DAILY_CHECKS) {
+            if (type != ScheduleTypes.BS_DAILY_CHECKS) {
                 assertFalse(trigger.isApplicable(type),
                             () -> "Expected not applicable for " + type);
             }
