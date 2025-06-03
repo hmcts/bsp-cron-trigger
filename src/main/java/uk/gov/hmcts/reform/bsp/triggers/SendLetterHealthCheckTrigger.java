@@ -1,14 +1,14 @@
 package uk.gov.hmcts.reform.bsp.triggers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.models.ScheduleTypes;
 
 /**
  * This is an example and should be removed when the first real trigger is created.
  */
-@Service
+@Component
 @Slf4j
 public class SendLetterHealthCheckTrigger implements Trigger {
 

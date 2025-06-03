@@ -25,6 +25,9 @@ spring:
 app:
   trigger-type: ${TRIGGER_TYPE}
 
-
 url:
   send-letter-service: ${SEND_LETTER_SERVICE_URL}
+
+slack:
+  token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS}
+  channel-id-daily-checks: ${SLACK_CHANNEL_TOKEN_DAILY_CHECKS}
