@@ -7,11 +7,11 @@ import uk.gov.hmcts.reform.bsp.services.BulkPrintChecksService;
 
 @Component
 @Slf4j
-public class BpDailyChecksTrigger implements Trigger {
+public class BulkPrintChecksTrigger implements Trigger {
 
     private final BulkPrintChecksService bulkPrintChecksService;
 
-    public BpDailyChecksTrigger(BulkPrintChecksService bulkPrintChecksService) {
+    public BulkPrintChecksTrigger(BulkPrintChecksService bulkPrintChecksService) {
         this.bulkPrintChecksService = bulkPrintChecksService;
     }
 
