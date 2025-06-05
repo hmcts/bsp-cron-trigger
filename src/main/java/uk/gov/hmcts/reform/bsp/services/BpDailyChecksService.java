@@ -8,17 +8,16 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class DailyChecksService {
+public class BpDailyChecksService {
     private final SlackClient slackClient;
 
-    public DailyChecksService(SlackClient slackClient) {
+    public BpDailyChecksService(SlackClient slackClient) {
         this.slackClient = slackClient;
     }
 
     public void runDailyChecks() {
         List<String> actions = List.of(
             "Look at bulk print letter that cannot be aborted.",
-            "Look at bulk scan envelope that cannot be reprocessed.",
             "Send stand-up summary"
         );
 

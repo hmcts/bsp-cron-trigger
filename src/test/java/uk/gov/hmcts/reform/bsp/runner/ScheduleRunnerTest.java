@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.bsp.config.CronTimerProperties;
 import uk.gov.hmcts.reform.bsp.models.ScheduleTypes;
-import uk.gov.hmcts.reform.bsp.triggers.SendLetterHealthCheckTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BpDailyChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.Trigger;
 
 import java.util.List;
@@ -35,7 +35,7 @@ class ScheduleRunnerTest {
     CronTimerProperties cronTimerProperties;
 
     @Mock
-    SendLetterHealthCheckTrigger sendLetterHealthCheckTrigger;
+    BpDailyChecksTrigger bpDailyChecksTrigger;
 
     private static final String MESSAGE_DO_NOT_MATCH_MESSAGE = "Messages do not match";
     private static final String STATUS_DO_NOT_MATCH_MESSAGE = "Status codes do not match";
@@ -61,14 +61,14 @@ class ScheduleRunnerTest {
 
     @Test
     void testRunnerWhereSuccessfullyTriggered() {
-        when(mockArrayList.stream()).thenReturn(Stream.of(sendLetterHealthCheckTrigger));
-        when(sendLetterHealthCheckTrigger.isApplicable(ScheduleTypes.SEND_LETTER_HEALTH_CHECK))
+        when(mockArrayList.stream()).thenReturn(Stream.of(bpDailyChecksTrigger));
+        when(bpDailyChecksTrigger.isApplicable(ScheduleTypes.BP_DAILY_CHECKS))
             .thenReturn(true);
-        doNothing().when(sendLetterHealthCheckTrigger).trigger();
+        doNothing().when(bpDailyChecksTrigger).trigger();
 
-        when(cronTimerProperties.getTriggerType()).thenReturn("SEND_LETTER_HEALTH_CHECK");
+        when(cronTimerProperties.getTriggerType()).thenReturn("BP_DAILY_CHECKS");
 
         scheduleRunner.run();
-        verify(sendLetterHealthCheckTrigger, Mockito.times(1)).trigger();
+        verify(bpDailyChecksTrigger, Mockito.times(1)).trigger();
     }
 }

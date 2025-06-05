@@ -16,24 +16,23 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class DailyChecksServiceTest {
+class BsDailyChecksServiceTest {
 
     @Mock
     private SlackClient slackClient;
 
     @InjectMocks
-    private DailyChecksService dailyChecksService;
+    private BsDailyChecksService bsDailyChecksService;
 
     @Test
     void runDailyChecks_shouldSendMessageWithExpectedContent() {
-        dailyChecksService.runDailyChecks();
+        bsDailyChecksService.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackClient, times(1)).sendSlackMessage(captor.capture());
 
         String expected =
             "*:spiral_note_pad: Today's Bulk Print Actions:*\n"
-                + "• Look at bulk print letter that cannot be aborted.\n"
                 + "• Look at bulk scan envelope that cannot be reprocessed.\n"
                 + "• Send stand-up summary\n";
 
@@ -47,14 +46,14 @@ class DailyChecksServiceTest {
 
         RuntimeException ex = assertThrows(
             RuntimeException.class,
-            () -> dailyChecksService.runDailyChecks()
+            () -> bsDailyChecksService.runDailyChecks()
         );
         assertEquals("Slack API failure", ex.getMessage());
     }
 
     @Test
     void runDailyChecks_withNullSlackClient_shouldThrowNullPointerException() {
-        DailyChecksService serviceWithNull = new DailyChecksService(null);
+        BsDailyChecksService serviceWithNull = new BsDailyChecksService(null);
         assertThrows(NullPointerException.class, serviceWithNull::runDailyChecks);
     }
 }

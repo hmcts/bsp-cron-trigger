@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.bsp.models;
 
 import lombok.Getter;
-import uk.gov.hmcts.reform.bsp.triggers.DailyChecksTrigger;
-import uk.gov.hmcts.reform.bsp.triggers.SendLetterHealthCheckTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BsDailyChecksTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BpDailyChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.Trigger;
 
 /**
@@ -10,8 +10,8 @@ import uk.gov.hmcts.reform.bsp.triggers.Trigger;
  */
 @Getter
 public enum ScheduleTypes {
-    BS_DAILY_CHECKS(DailyChecksTrigger.class),
-    SEND_LETTER_HEALTH_CHECK(SendLetterHealthCheckTrigger.class);
+    BS_DAILY_CHECKS(BsDailyChecksTrigger.class),
+    BP_DAILY_CHECKS(BpDailyChecksTrigger.class);
 
     private final Class<? extends Trigger> triggerClass;
 

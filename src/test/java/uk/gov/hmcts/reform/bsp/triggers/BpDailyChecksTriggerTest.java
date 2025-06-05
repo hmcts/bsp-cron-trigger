@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.bsp.models.ScheduleTypes;
-import uk.gov.hmcts.reform.bsp.services.DailyChecksService;
+import uk.gov.hmcts.reform.bsp.services.BpDailyChecksService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,13 +17,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class DailyChecksTriggerTest {
+class BpDailyChecksTriggerTest {
 
     @Mock
-    private DailyChecksService dailyChecksService;
+    private BpDailyChecksService dailyChecksService;
 
     @InjectMocks
-    private DailyChecksTrigger trigger;
+    private BpDailyChecksTrigger trigger;
 
     @Test
     void trigger_shouldInvokeRunDailyChecksOnce() {
@@ -45,13 +45,13 @@ class DailyChecksTriggerTest {
 
     @Test
     void isApplicable_shouldReturnTrueForBspDailyChecks() {
-        assertTrue(trigger.isApplicable(ScheduleTypes.BS_DAILY_CHECKS));
+        assertTrue(trigger.isApplicable(ScheduleTypes.BP_DAILY_CHECKS));
     }
 
     @Test
     void isApplicable_shouldReturnFalseForOtherTypes() {
         for (ScheduleTypes type : ScheduleTypes.values()) {
-            if (type != ScheduleTypes.BS_DAILY_CHECKS) {
+            if (type != ScheduleTypes.BP_DAILY_CHECKS) {
                 assertFalse(trigger.isApplicable(type),
                             () -> "Expected not applicable for " + type);
             }
