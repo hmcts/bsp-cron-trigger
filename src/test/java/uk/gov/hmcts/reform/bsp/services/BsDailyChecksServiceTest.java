@@ -32,7 +32,7 @@ class BsDailyChecksServiceTest {
         verify(slackClient, times(1)).sendSlackMessage(captor.capture());
 
         String expected =
-            "*:spiral_note_pad: Today's Bulk Print Actions:*\n"
+            "*:spiral_note_pad: Today's Bulk Scan Actions:*\n"
                 + "• Look at bulk scan envelope that cannot be reprocessed.\n"
                 + "• Send stand-up summary\n";
 
