@@ -10,8 +10,8 @@ import uk.gov.hmcts.reform.bsp.triggers.Trigger;
  */
 @Getter
 public enum ScheduleTypes {
-    BS_DAILY_CHECKS(BsDailyChecksTrigger.class),
-    BP_DAILY_CHECKS(BpDailyChecksTrigger.class);
+    BULK_SCAN_CHECKS(BsDailyChecksTrigger.class),
+    BULK_PRINT_CHECKS(BpDailyChecksTrigger.class);
 
     private final Class<? extends Trigger> triggerClass;
 

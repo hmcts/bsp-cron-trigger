@@ -8,20 +8,20 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class BsDailyChecksService {
+public class BulkPrintChecksService {
     private final SlackClient slackClient;
 
-    public BsDailyChecksService(SlackClient slackClient) {
+    public BulkPrintChecksService(SlackClient slackClient) {
         this.slackClient = slackClient;
     }
 
     public void runDailyChecks() {
         List<String> actions = List.of(
-            "Look at bulk scan envelope that cannot be reprocessed.",
+            "Look at bulk print letter that cannot be aborted.",
             "Send stand-up summary"
         );
 
-        StringBuilder sb = new StringBuilder("*:spiral_note_pad: Today's Bulk Scan Actions:*\n");
+        StringBuilder sb = new StringBuilder("*:spiral_note_pad: Today's Bulk Print Actions:*\n");
         for (String action : actions) {
             sb.append("• ").append(action).append("\n");
         }

@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.bsp.models.ScheduleTypes;
-import uk.gov.hmcts.reform.bsp.services.BpDailyChecksService;
+import uk.gov.hmcts.reform.bsp.services.BulkPrintChecksService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 class BpDailyChecksTriggerTest {
 
     @Mock
-    private BpDailyChecksService dailyChecksService;
+    private BulkPrintChecksService dailyChecksService;
 
     @InjectMocks
     private BpDailyChecksTrigger trigger;
@@ -45,13 +45,13 @@ class BpDailyChecksTriggerTest {
 
     @Test
     void isApplicable_shouldReturnTrueForBspDailyChecks() {
-        assertTrue(trigger.isApplicable(ScheduleTypes.BP_DAILY_CHECKS));
+        assertTrue(trigger.isApplicable(ScheduleTypes.BULK_PRINT_CHECKS));
     }
 
     @Test
     void isApplicable_shouldReturnFalseForOtherTypes() {
         for (ScheduleTypes type : ScheduleTypes.values()) {
-            if (type != ScheduleTypes.BP_DAILY_CHECKS) {
+            if (type != ScheduleTypes.BULK_PRINT_CHECKS) {
                 assertFalse(trigger.isApplicable(type),
                             () -> "Expected not applicable for " + type);
             }

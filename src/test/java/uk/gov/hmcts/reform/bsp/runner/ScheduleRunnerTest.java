@@ -62,11 +62,11 @@ class ScheduleRunnerTest {
     @Test
     void testRunnerWhereSuccessfullyTriggered() {
         when(mockArrayList.stream()).thenReturn(Stream.of(bpDailyChecksTrigger));
-        when(bpDailyChecksTrigger.isApplicable(ScheduleTypes.BP_DAILY_CHECKS))
+        when(bpDailyChecksTrigger.isApplicable(ScheduleTypes.BULK_PRINT_CHECKS))
             .thenReturn(true);
         doNothing().when(bpDailyChecksTrigger).trigger();
 
-        when(cronTimerProperties.getTriggerType()).thenReturn("BP_DAILY_CHECKS");
+        when(cronTimerProperties.getTriggerType()).thenReturn("BULK_PRINT_CHECKS");
 
         scheduleRunner.run();
         verify(bpDailyChecksTrigger, Mockito.times(1)).trigger();

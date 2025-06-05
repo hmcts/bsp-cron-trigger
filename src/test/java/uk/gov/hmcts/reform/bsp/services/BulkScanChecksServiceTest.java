@@ -16,24 +16,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class BpDailyChecksServiceTest {
+class BulkScanChecksServiceTest {
 
     @Mock
     private SlackClient slackClient;
 
     @InjectMocks
-    private BpDailyChecksService bpDailyChecksService;
+    private BulkScanChecksService bulkScanChecksService;
 
     @Test
     void runDailyChecks_shouldSendMessageWithExpectedContent() {
-        bpDailyChecksService.runDailyChecks();
+        bulkScanChecksService.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackClient, times(1)).sendSlackMessage(captor.capture());
 
         String expected =
-            "*:spiral_note_pad: Today's Bulk Print Actions:*\n"
-                + "• Look at bulk print letter that cannot be aborted.\n"
+            "*:spiral_note_pad: Today's Bulk Scan Actions:*\n"
+                + "• Look at bulk scan envelope that cannot be reprocessed.\n"
                 + "• Send stand-up summary\n";
 
         assertEquals(expected, captor.getValue());
@@ -46,14 +46,14 @@ class BpDailyChecksServiceTest {
 
         RuntimeException ex = assertThrows(
             RuntimeException.class,
-            () -> bpDailyChecksService.runDailyChecks()
+            () -> bulkScanChecksService.runDailyChecks()
         );
         assertEquals("Slack API failure", ex.getMessage());
     }
 
     @Test
     void runDailyChecks_withNullSlackClient_shouldThrowNullPointerException() {
-        BsDailyChecksService serviceWithNull = new BsDailyChecksService(null);
+        BulkScanChecksService serviceWithNull = new BulkScanChecksService(null);
         assertThrows(NullPointerException.class, serviceWithNull::runDailyChecks);
     }
 }
