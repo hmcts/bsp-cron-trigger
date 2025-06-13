@@ -26,10 +26,10 @@ app:
   trigger-type: ${TRIGGER_TYPE}
 
 url:
-  send-letter-service: ${SEND_LETTER_SERVICE_URL}
-  blob-router-service: ${BLOB_ROUTER_SERVICE_URL}
-  bulk-scan-processor: ${BULK_SCAN_PROCESSOR_URL}
-  bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL}
+  send-letter-service: ${SEND_LETTER_SERVICE_URL:http://localhost:8485}
+  blob-router-service: ${BLOB_ROUTER_SERVICE_URL:http://localhost:8584}
+  bulk-scan-processor: ${BULK_SCAN_PROCESSOR_URL:http://localhost:8581}
+  bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL:http://localhost:8582}
 
 slack:
   token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS}
