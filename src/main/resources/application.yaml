@@ -27,6 +27,9 @@ app:
 
 url:
   send-letter-service: ${SEND_LETTER_SERVICE_URL}
+  blob-router-service: ${BLOB_ROUTER_SERVICE_URL}
+  bulk-scan-processor: ${BULK_SCAN_PROCESSOR_URL}
+  bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL}
 
 slack:
   token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS}

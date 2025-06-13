@@ -21,6 +21,23 @@ java {
   }
 }
 
+def configureSourceSet(String name) {
+  sourceSets.create(name) { sourceSet ->
+    sourceSet.java {
+      compileClasspath += sourceSets.main.output + sourceSets.test.output
+      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+      srcDir "src/${name}/java"
+    }
+    sourceSet.resources.srcDir "src/${name}/resources"
+  }
+}
+
+['smokeTest'].each { configureSourceSet(it) }
+
+configurations {
+  smokeTestImplementation.extendsFrom testImplementation
+  smokeTestRuntimeOnly.extendsFrom runtimeOnly
+}
 
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
@@ -41,6 +58,13 @@ tasks.withType(Test).configureEach {
   }
 }
 
+tasks.register('smoke', Test) {
+  description = "Runs Smoke Tests"
+  group = "Verification"
+  testClassesDirs = sourceSets.smokeTest.output.classesDirs
+  classpath = sourceSets.smokeTest.runtimeClasspath
+}
+
 jacocoTestReport {
   executionData(test)
   reports {
@@ -58,7 +82,6 @@ sonarqube {
     property "sonar.projectKey", "uk.gov.hmcts.reform:bsp-cron-trigger"
   }
 }
-
 
 dependencyUpdates {
   def isNonStable = { String version ->
@@ -102,6 +125,11 @@ bootJar {
   manifest {
     attributes('Implementation-Version': project.version.toString())
   }
+}
+
+// Gradle 7.x issue, workaround from: https://github.com/gradle/gradle/issues/17236#issuecomment-894768083
+rootProject.tasks.named("processSmokeTestResources") {
+  duplicatesStrategy = 'include'
 }
 
 wrapper {
