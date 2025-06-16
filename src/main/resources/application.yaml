@@ -24,6 +24,7 @@ spring:
 
 app:
   trigger-type: ${TRIGGER_TYPE}
+  enabled: ${TRIGGER_ENABLED}
 
 url:
   send-letter-service: ${SEND_LETTER_SERVICE_URL:http://localhost:8485}
@@ -32,5 +33,5 @@ url:
   bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL:http://localhost:8582}
 
 slack:
-  token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS}
-  channel-id-daily-checks: ${SLACK_CHANNEL_TOKEN_DAILY_CHECKS}
+  token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS:atoken}
+  channel-id-daily-checks: ${SLACK_CHANNEL_TOKEN_DAILY_CHECKS:atoken}

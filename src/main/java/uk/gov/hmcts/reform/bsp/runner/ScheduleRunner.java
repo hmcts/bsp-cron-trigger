@@ -31,6 +31,11 @@ public class ScheduleRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        if (!cronTimerProperties.isEnabled()) {
+            log.error("Trigger runner is disabled for {}.", cronTimerProperties.getTriggerType());
+            System.exit(1);
+        }
+
         Optional.ofNullable(EnumUtils.getEnum(
             ScheduleTypes.class,
             cronTimerProperties.getTriggerType()

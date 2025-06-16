@@ -15,7 +15,7 @@ public class StaleLetterResponse {
     public final List<StaleLetter> staleLetters;
 
     /**
-     * Constructor here is needed, because the two variables above are final
+     * Constructor here is needed, because the two variables above are final.
      */
     @JsonCreator
     public StaleLetterResponse(

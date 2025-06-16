@@ -11,8 +11,8 @@ withPipeline(type, product, component) {
   nonServiceApp()
 
   // Needed for integration tests
-  env.TEST_SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
-  env.TEST_BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
-  env.TEST_BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
-  env.TEST_BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
+  env.SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
+  env.BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
+  env.BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
+  env.BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
 }

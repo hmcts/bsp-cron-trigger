@@ -21,7 +21,7 @@ public class StaleLetter {
     public final LocalDateTime sentToPrintAt;
 
     /**
-     * Constructor here is needed, because the two variables above are final
+     * Constructor here is needed, because the two variables above are final.
      */
     public StaleLetter(UUID id, String status, String service,
                        LocalDateTime createdAt, LocalDateTime sentToPrintAt) {
