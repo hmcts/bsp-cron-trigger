@@ -25,7 +25,7 @@ class SendLetterServiceClientTest {
     @MockitoBean
     private SlackClient slackClient;
 
-    @DisplayName("Should retrieve stale letters from real service")
+    @DisplayName("Should retrieve stale letters from bulk print")
     @Test
     void getStaleLettersTest() {
         StaleLetterResponse resp = client.getStaleLetters();
@@ -40,7 +40,7 @@ class SendLetterServiceClientTest {
             assertThat(letter.getId()).isNotNull();
             assertThat(letter.getStatus())
                 .withFailMessage("status must not be blank")
-                .isBlank();
+                .isNotBlank();
             assertThat(letter.getService())
                 .withFailMessage("service must not be blank")
                 .isNotBlank();

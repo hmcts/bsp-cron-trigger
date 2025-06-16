@@ -6,9 +6,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeResponse;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
+
+import java.util.UUID;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @FeignClient(
     name = "bulkScanProcessorClient",
@@ -26,14 +31,14 @@ public interface BulkScanProcessorClient {
     );
 
     @DeleteMapping("/envelopes/stale/{envelopeId}")
-    void deleteStaleEnvelope(
+    SearchResult<UUID> deleteStaleEnvelope(
         @PathVariable("envelopeId") String envelopeId,
-        @RequestHeader("Authorization") String bearerToken
+        @RequestParam(name = "stale_time", defaultValue = "168") int staleTime
     );
 
     @PutMapping("/actions/reprocess/{envelopeId}")
     void reprocessEnvelope(
-        @PathVariable("envelopeId") String envelopeId,
-        @RequestHeader("Authorization") String bearerToken
+        @RequestHeader(value = AUTHORIZATION) String bearerToken,
+        @PathVariable("envelopeId") UUID id
     );
 }
