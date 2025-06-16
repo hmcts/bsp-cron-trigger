@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.bsp.models;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,10 +40,10 @@ class PaymentResponseTest {
     @DisplayName("JSON deserialization should populate all fields correctly, including Instant")
     void jsonDeserialization_shouldPopulateFields() throws Exception {
         String json = "{"
-            + "\"id\":\"123e4567-e89b-12d3-a456-426614174000\"," +
-            "\"status\":\"FAILED\"," +
-            "\"last_modified\":\"2025-06-16T10:00:00Z\"," +
-            "\"document_control_number\":\"DCN456\""
+            + "\"id\":\"123e4567-e89b-12d3-a456-426614174000\","
+            + "\"status\":\"FAILED\","
+            + "\"last_modified\":\"2025-06-16T10:00:00Z\","
+            + "\"document_control_number\":\"DCN456\""
             + "}";
 
         PaymentResponse response = mapper.readValue(json, PaymentResponse.class);

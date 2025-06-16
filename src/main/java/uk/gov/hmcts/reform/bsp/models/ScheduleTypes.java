@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.bsp.models;
 
 import lombok.Getter;
-import uk.gov.hmcts.reform.bsp.triggers.BulkScanChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.BulkPrintChecksTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BulkScanChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.Trigger;
 
 /**

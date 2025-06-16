@@ -77,12 +77,12 @@ class PaymentTest {
     @DisplayName("Should deserialize from JSON correctly")
     void deserializeFromJson() throws Exception {
         String json = "{"
-            + "\"id\":\"00000000-0000-0000-0000-000000000002\"," +
-            "\"envelopeId\":\"env456\"," +
-            "\"exceptionRecord\":true," +
-            "\"createdAt\":\"2025-06-15T10:00:00\"," +
-            "\"lastUpdatedAt\":\"2025-06-16T12:00:00\"" +
-            "}";
+            + "\"id\":\"00000000-0000-0000-0000-000000000002\","
+            + "\"envelopeId\":\"env456\","
+            + "\"exceptionRecord\":true,"
+            + "\"createdAt\":\"2025-06-15T10:00:00\","
+            + "\"lastUpdatedAt\":\"2025-06-16T12:00:00\""
+            + "}";
 
         Payment payment = mapper.readValue(json, Payment.class);
 
