@@ -25,5 +25,5 @@ public interface BulkScanOrchestratorClient {
     List<UpdatePayment> getFailedUpdatePayments();
 
     @PutMapping("/payments/updated/retry/{paymentId}")
-    UpdatePayment retryUpdatedPayment(@PathVariable("paymentId") String paymentId);
+    UpdatePayment retryUpdatePayment(@PathVariable("paymentId") String paymentId);
 }

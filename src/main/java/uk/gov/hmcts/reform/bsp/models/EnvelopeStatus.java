@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.bsp.models;
 
-public enum Status {
+public enum EnvelopeStatus {
     CREATED,
     METADATA_FAILURE,
     UPLOADED,

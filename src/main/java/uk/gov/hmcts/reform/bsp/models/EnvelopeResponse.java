@@ -39,7 +39,7 @@ public class EnvelopeResponse {
     @JsonProperty("rescan_for")
     private String rescanFor;
 
-    private Status status;
+    private EnvelopeStatus status;
 
     private String classification;
 

@@ -43,7 +43,7 @@ class EnvelopeResponseTest {
         resp.setZipFileCreatedDate(d3);
         resp.setZipFileName("zipname");
         resp.setRescanFor("scan");
-        resp.setStatus(Status.COMPLETED);
+        resp.setStatus(EnvelopeStatus.COMPLETED);
         resp.setClassification("A");
         resp.setScannableItems(List.of());
         resp.setPayments(List.of());
@@ -61,7 +61,7 @@ class EnvelopeResponseTest {
         assertThat(resp.getZipFileCreatedDate()).isEqualTo(d3);
         assertThat(resp.getZipFileName()).isEqualTo("zipname");
         assertThat(resp.getRescanFor()).isEqualTo("scan");
-        assertThat(resp.getStatus()).isEqualTo(Status.COMPLETED);
+        assertThat(resp.getStatus()).isEqualTo(EnvelopeStatus.COMPLETED);
         assertThat(resp.getClassification()).isEqualTo("A");
         assertThat(resp.getScannableItems()).isEmpty();
         assertThat(resp.getPayments()).isEmpty();
@@ -84,7 +84,7 @@ class EnvelopeResponseTest {
         resp.setZipFileCreatedDate(Instant.parse("2025-01-04T00:00:00Z"));
         resp.setZipFileName("zipname");
         resp.setRescanFor("scan");
-        resp.setStatus(Status.COMPLETED);
+        resp.setStatus(EnvelopeStatus.COMPLETED);
         resp.setClassification("A");
         resp.setScannableItems(List.of());
         resp.setPayments(List.of());
@@ -155,7 +155,7 @@ class EnvelopeResponseTest {
             .isEqualTo(Instant.parse("2025-01-04T00:00:00Z"));
         assertThat(resp.getZipFileName()).isEqualTo("zipname");
         assertThat(resp.getRescanFor()).isEqualTo("scan");
-        assertThat(resp.getStatus()).isEqualTo(Status.COMPLETED);
+        assertThat(resp.getStatus()).isEqualTo(EnvelopeStatus.COMPLETED);
         assertThat(resp.getClassification()).isEqualTo("A");
         assertThat(resp.getScannableItems()).isEmpty();
         assertThat(resp.getPayments()).isEmpty();
