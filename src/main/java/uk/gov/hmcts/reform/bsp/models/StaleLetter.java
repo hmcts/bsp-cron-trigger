@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.bsp.models;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -23,8 +24,14 @@ public class StaleLetter {
     /**
      * Constructor here is needed, because the two variables above are final.
      */
-    public StaleLetter(UUID id, String status, String service,
-                       LocalDateTime createdAt, LocalDateTime sentToPrintAt) {
+    @JsonCreator
+    public StaleLetter(
+        @JsonProperty("id") UUID id,
+        @JsonProperty("status") String status,
+        @JsonProperty("service") String service,
+        @JsonProperty("created_at") LocalDateTime createdAt,
+        @JsonProperty("sent_to_print_at") LocalDateTime sentToPrintAt
+    ) {
         this.id = id;
         this.status = status;
         this.service = service;
