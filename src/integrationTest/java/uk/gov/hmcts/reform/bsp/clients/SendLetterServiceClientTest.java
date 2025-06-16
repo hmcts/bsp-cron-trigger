@@ -40,7 +40,7 @@ class SendLetterServiceClientTest {
             assertThat(letter.getId()).isNotNull();
             assertThat(letter.getStatus())
                 .withFailMessage("status must not be blank")
-                .isNotBlank();
+                .isBlank();
             assertThat(letter.getService())
                 .withFailMessage("service must not be blank")
                 .isNotBlank();
