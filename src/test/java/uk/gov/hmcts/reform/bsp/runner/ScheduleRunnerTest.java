@@ -45,6 +45,7 @@ class ScheduleRunnerTest {
         try (LogCaptor logCaptor = LogCaptor.forClass(ScheduleRunner.class)) {
 
             when(cronTimerProperties.getTriggerType()).thenReturn("UNKNOWN_ENUM");
+            when(cronTimerProperties.isEnabled()).thenReturn(true);
 
             int statusCode = catchSystemExit(() -> {
                 scheduleRunner.run();
@@ -67,8 +68,29 @@ class ScheduleRunnerTest {
         doNothing().when(bulkPrintChecksTrigger).trigger();
 
         when(cronTimerProperties.getTriggerType()).thenReturn("BULK_PRINT_CHECKS");
+        when(cronTimerProperties.isEnabled()).thenReturn(true);
 
         scheduleRunner.run();
         verify(bulkPrintChecksTrigger, Mockito.times(1)).trigger();
+    }
+
+    @Test
+    void testRunnerNotEnabled() throws Exception {
+        try (LogCaptor logCaptor = LogCaptor.forClass(ScheduleRunner.class)) {
+
+            when(cronTimerProperties.getTriggerType()).thenReturn("UNKNOWN_ENUM");
+            when(cronTimerProperties.isEnabled()).thenReturn(false);
+
+            int statusCode = catchSystemExit(() -> {
+                scheduleRunner.run();
+            });
+
+            assertTrue(
+                logCaptor.getErrorLogs().getFirst().contains("Trigger runner is disabled for UNKNOWN_ENUM."),
+                MESSAGE_DO_NOT_MATCH_MESSAGE
+            );
+
+            assertEquals(1, statusCode, STATUS_DO_NOT_MATCH_MESSAGE);
+        }
     }
 }

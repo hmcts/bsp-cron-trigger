@@ -12,5 +12,5 @@ import org.springframework.context.annotation.Configuration;
 public class CronTimerProperties {
 
     private String triggerType;
-
+    private boolean enabled;
 }

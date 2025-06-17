@@ -21,6 +21,23 @@ java {
   }
 }
 
+def configureSourceSet(String name) {
+  sourceSets.create(name) { sourceSet ->
+    sourceSet.java {
+      compileClasspath += sourceSets.main.output + sourceSets.test.output
+      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+      srcDir "src/${name}/java"
+    }
+    sourceSet.resources.srcDir "src/${name}/resources"
+  }
+}
+
+['integrationTest'].each { configureSourceSet(it) }
+
+configurations {
+  integrationTestImplementation.extendsFrom testImplementation
+  integrationTestRuntimeOnly.extendsFrom runtimeOnly
+}
 
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
@@ -41,8 +58,16 @@ tasks.withType(Test).configureEach {
   }
 }
 
+tasks.register('integration', Test) {
+  description = "Runs integration tests"
+  group = "Verification"
+  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  classpath = sourceSets.integrationTest.runtimeClasspath
+  failFast = true
+}
+
 jacocoTestReport {
-  executionData(test)
+  executionData(test, integration)
   reports {
     xml.getRequired().set(true)
     csv.getRequired().set(false)
@@ -51,6 +76,7 @@ jacocoTestReport {
 }
 
 tasks.sonarqube.dependsOn(jacocoTestReport)
+tasks.check.dependsOn(integration)
 
 sonarqube {
   properties {
@@ -58,7 +84,6 @@ sonarqube {
     property "sonar.projectKey", "uk.gov.hmcts.reform:bsp-cron-trigger"
   }
 }
-
 
 dependencyUpdates {
   def isNonStable = { String version ->
@@ -94,6 +119,7 @@ dependencies {
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
   testImplementation group: 'com.github.stefanbirkner', name: 'system-lambda', version: '1.2.1'
   testImplementation group: 'io.github.hakky54', name: 'logcaptor', version: '2.11.0'
+  testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.5'
 }
 
 bootJar {
@@ -102,6 +128,11 @@ bootJar {
   manifest {
     attributes('Implementation-Version': project.version.toString())
   }
+}
+
+// Gradle 7.x issue, workaround from: https://github.com/gradle/gradle/issues/17236#issuecomment-894768083
+rootProject.tasks.named("processIntegrationTestResources") {
+  duplicatesStrategy = 'include'
 }
 
 wrapper {
