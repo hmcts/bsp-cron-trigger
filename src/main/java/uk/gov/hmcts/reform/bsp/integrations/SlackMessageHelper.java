@@ -4,8 +4,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SlackMessageHelper {
-    private static final int MAX_CHUNK = 4000;
-    private static final int MAX_TOTAL = 20_000;
+    protected static final int MAX_CHUNK = 4000;
+    protected static final int MAX_TOTAL = 20_000;
 
     private final SlackClient slackClient;
 
