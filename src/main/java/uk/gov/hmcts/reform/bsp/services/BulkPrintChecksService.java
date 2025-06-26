@@ -51,7 +51,8 @@ public class BulkPrintChecksService {
                     );
                 }
             } catch (Exception e) {
-                actions.add("Letter " + letter.getId() + " ➞ " + e.getMessage());
+                log.warn("Exception occurred while marking aborted or created {}", letter.getId(), e);
+                actions.add("Investigate Letter " + letter.getId());
             }
         }
 
