@@ -82,6 +82,22 @@ docker image rm <image-id>
 
 There is no need to remove postgres and java or similar core images.
 
+## Running Tests
+
+If you want to run both unit and integration tests, simply run `./gradlew build`.
+Alternatively you can run them individually or as a group through IntelliJ.
+
+Note that if your local instance of the relevant services are not running, you will get an error.
+If you want to simply run everything against AAT, ensure you run the following beforehand:
+```shell
+export SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
+export BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
+export BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
+export BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
+```
+
+Ensure your VPN in on, obviously :)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
