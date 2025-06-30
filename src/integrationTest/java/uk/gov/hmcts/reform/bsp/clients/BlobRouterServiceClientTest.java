@@ -1,18 +1,25 @@
 package uk.gov.hmcts.reform.bsp.clients;
 
 import jdk.jfr.Description;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
-import uk.gov.hmcts.reform.bsp.integrations.SlackClient;
+import uk.gov.hmcts.reform.bsp.config.feign.BulkScanOrchestratorClient;
+import uk.gov.hmcts.reform.bsp.config.feign.BulkScanProcessorClient;
+import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
+import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(properties = {
     "app.enabled=true",
@@ -27,7 +34,23 @@ class BlobRouterServiceClientTest {
     private BlobRouterServiceClient client;
 
     @MockitoBean
-    private SlackClient slackClient;
+    private AuthorisationProperties authorisationProperties;
+    @MockitoBean
+    private SlackMessageHelper slackMessageHelper;
+    @MockitoBean
+    private BulkScanProcessorClient processorClient;
+    @MockitoBean
+    private BulkScanOrchestratorClient orchestratorClient;
+
+    @BeforeEach
+    void safeSchedulerStubs() {
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes())
+            .thenReturn(emptyEnvs);
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+    }
 
     @DisplayName("Should delete all stale blobs and return successfully")
     @Test

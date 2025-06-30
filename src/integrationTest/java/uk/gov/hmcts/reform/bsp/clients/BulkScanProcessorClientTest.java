@@ -1,20 +1,26 @@
 package uk.gov.hmcts.reform.bsp.clients;
 
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
+import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
+import uk.gov.hmcts.reform.bsp.config.feign.BulkScanOrchestratorClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanProcessorClient;
-import uk.gov.hmcts.reform.bsp.integrations.SlackClient;
+import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeResponse;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.time.Instant;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(properties = {
     "app.enabled=true",
@@ -26,7 +32,21 @@ class BulkScanProcessorClientTest {
     private BulkScanProcessorClient client;
 
     @MockitoBean
-    private SlackClient slackClient;
+    private AuthorisationProperties authorisationProperties;
+    @MockitoBean
+    private SlackMessageHelper slackMessageHelper;
+    @MockitoBean
+    private BlobRouterServiceClient blobRouterServiceClient;
+    @MockitoBean
+    private BulkScanOrchestratorClient orchestratorClient;
+
+    @BeforeEach
+    void safeSchedulerStubs() {
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+    }
 
     @DisplayName("Should retrieve stale incomplete envelopes and deserialize correctly")
     @Test

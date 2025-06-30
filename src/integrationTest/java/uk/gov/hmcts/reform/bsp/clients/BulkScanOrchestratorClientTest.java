@@ -1,20 +1,28 @@
 package uk.gov.hmcts.reform.bsp.clients;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
+import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanOrchestratorClient;
-import uk.gov.hmcts.reform.bsp.integrations.SlackClient;
+import uk.gov.hmcts.reform.bsp.config.feign.BulkScanProcessorClient;
+import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
+import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.Payment;
+import uk.gov.hmcts.reform.bsp.models.SearchResult;
 import uk.gov.hmcts.reform.bsp.models.UpdatePayment;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(properties = {
     "app.enabled=true",
@@ -26,7 +34,21 @@ class BulkScanOrchestratorClientTest {
     private BulkScanOrchestratorClient client;
 
     @MockitoBean
-    private SlackClient slackClient;
+    private AuthorisationProperties authorisationProperties;
+    @MockitoBean
+    private SlackMessageHelper slackMessageHelper;
+    @MockitoBean
+    private BulkScanProcessorClient processorClient;
+    @MockitoBean
+    private BlobRouterServiceClient blobRouterServiceClient;
+
+    @BeforeEach
+    void safeSchedulerStubs() {
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes())
+            .thenReturn(emptyEnvs);
+    }
 
     @DisplayName("Should retrieve list of failed-new payments and deserialize correctly")
     @Test
