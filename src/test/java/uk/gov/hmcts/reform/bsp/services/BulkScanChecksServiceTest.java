@@ -33,13 +33,19 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BulkScanChecksServiceTest {
 
-    @Mock private AuthorisationProperties authProps;
-    @Mock private BlobRouterServiceClient blobClient;
-    @Mock private BulkScanProcessorClient processorClient;
-    @Mock private BulkScanOrchestratorClient orchestratorClient;
-    @Mock private SlackMessageHelper slackHelper;
+    @Mock
+    private AuthorisationProperties authProps;
+    @Mock
+    private BlobRouterServiceClient blobClient;
+    @Mock
+    private BulkScanProcessorClient processorClient;
+    @Mock
+    private BulkScanOrchestratorClient orchestratorClient;
+    @Mock
+    private SlackMessageHelper slackHelper;
 
-    @InjectMocks private BulkScanChecksService service;
+    @InjectMocks
+    private BulkScanChecksService service;
 
     @BeforeEach
     void setUp() {
@@ -226,12 +232,14 @@ class BulkScanChecksServiceTest {
             .getDeclaredMethod("retryPayments", List.class, Consumer.class, String.class);
         retryM.setAccessible(true);
 
-        Payment pNull = new Payment(); // default id==null
+        Payment paymentNull = new Payment(); // default id==null
         @SuppressWarnings("unchecked")
         List<String> errsNull = (List<String>) retryM.invoke(
             service,
-            Collections.singletonList(pNull),
-            (Consumer<Payment>) pp -> { throw new RuntimeException("boom"); },
+            Collections.singletonList(paymentNull),
+            (Consumer<Payment>) pp -> {
+                throw new RuntimeException("boom");
+            },
             "new"
         );
         assertEquals(1, errsNull.size());
@@ -239,14 +247,19 @@ class BulkScanChecksServiceTest {
 
         class Faulty extends UpdatePayment {
             @Override
-            public UUID getId() { throw new RuntimeException("id-fail"); }
+            public UUID getId() {
+                throw new RuntimeException("id-fail");
+            }
         }
+
         Faulty fp = new Faulty();
         @SuppressWarnings("unchecked")
         List<String> errsFaulty = (List<String>) retryM.invoke(
             service,
             Collections.singletonList(fp),
-            (Consumer<UpdatePayment>) pp -> { throw new RuntimeException("retry-fail"); },
+            (Consumer<UpdatePayment>) pp -> {
+                throw new RuntimeException("retry-fail");
+            },
             "update"
         );
         assertEquals(1, errsFaulty.size());
