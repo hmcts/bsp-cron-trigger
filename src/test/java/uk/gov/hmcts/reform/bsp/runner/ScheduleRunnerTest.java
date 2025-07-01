@@ -86,7 +86,7 @@ class ScheduleRunnerTest {
             });
 
             assertTrue(
-                logCaptor.getErrorLogs().getFirst().contains("Trigger runner is disabled for UNKNOWN_ENUM."),
+                logCaptor.getWarnLogs().getFirst().contains("Trigger runner is disabled for UNKNOWN_ENUM."),
                 MESSAGE_DO_NOT_MATCH_MESSAGE
             );
 
