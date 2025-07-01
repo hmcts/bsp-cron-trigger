@@ -17,9 +17,11 @@ import uk.gov.hmcts.reform.bsp.models.Payment;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 import uk.gov.hmcts.reform.bsp.models.UpdatePayment;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -174,5 +176,80 @@ class BulkScanChecksServiceTest {
 
         assertTrue(out.contains("Retry update payment " + updId + " ➞ update payment fail"));
         assertTrue(out.contains("Retry new payment " + newId + " ➞ new payment fail"));
+    }
+
+    @Test
+    void runDailyChecks_whenFetchPaymentsThrows_handlesInOuterCatch() {
+        SearchResult<String> emptyBlobs = new SearchResult<>();
+        emptyBlobs.setData(Collections.emptyList());
+        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
+
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
+
+        when(orchestratorClient.getFailedUpdatePayments())
+            .thenThrow(new RuntimeException("fetch-oops"));
+
+        service.runDailyChecks();
+
+        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+        verify(slackHelper).sendLongMessage(cap.capture());
+        assertTrue(cap.getValue().contains("Failed to retry payments."));
+    }
+
+    @Test
+    void runDailyChecks_nullLists_returnFetchErrorMessages() {
+        SearchResult<String> emptyBlobs = new SearchResult<>();
+        emptyBlobs.setData(Collections.emptyList());
+        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
+
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
+
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(null);
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(null);
+
+        service.runDailyChecks();
+
+        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+        verify(slackHelper).sendLongMessage(cap.capture());
+        String out = cap.getValue();
+        assertTrue(out.contains("Failed to fetch update payments"));
+        assertTrue(out.contains("Failed to fetch new payments"));
+    }
+
+    @Test
+    void retryPayments_reflectiveIdExtraction_nullAndExceptionPaths() throws Exception {
+        Method retryM = BulkScanChecksService.class
+            .getDeclaredMethod("retryPayments", List.class, Consumer.class, String.class);
+        retryM.setAccessible(true);
+
+        Payment pNull = new Payment(); // default id==null
+        @SuppressWarnings("unchecked")
+        List<String> errsNull = (List<String>) retryM.invoke(
+            service,
+            Collections.singletonList(pNull),
+            (Consumer<Payment>) pp -> { throw new RuntimeException("boom"); },
+            "new"
+        );
+        assertEquals(1, errsNull.size());
+        assertEquals("Retry new payment <null> ➞ boom", errsNull.get(0));
+
+        class Faulty extends UpdatePayment {
+            @Override
+            public UUID getId() { throw new RuntimeException("id-fail"); }
+        }
+        Faulty fp = new Faulty();
+        @SuppressWarnings("unchecked")
+        List<String> errsFaulty = (List<String>) retryM.invoke(
+            service,
+            Collections.singletonList(fp),
+            (Consumer<UpdatePayment>) pp -> { throw new RuntimeException("retry-fail"); },
+            "update"
+        );
+        assertEquals(1, errsFaulty.size());
+        assertEquals("Retry update payment <unknown> ➞ retry-fail", errsFaulty.get(0));
     }
 }

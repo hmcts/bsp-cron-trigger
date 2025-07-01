@@ -1,104 +1,120 @@
 # bsp-cron-trigger
 
-## Building and deploying the application
+A lightweight Spring Boot application that runs scheduled Bulk Print and Bulk Scan health-check jobs and reports results to Slack.
 
-### Building the application.
+## Table of Contents
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Architecture](#architecture)
+4. [Prerequisites](#prerequisites)
+5. [Configuration](#configuration)
+6. [Building the Application](#building-the-application)
+7. [Running the Application](#running-the-application)
+8. [Testing](#testing)
+9. [Contributing](#contributing)
+10. [License](#license)
 
-The project uses [Gradle](https://gradle.org) as a build tool. It already contains
-`./gradlew` wrapper script, so there's no need to install gradle.
+## Overview
+`bsp-cron-trigger` is designed to perform two daily checks:
 
-To build the project execute the following command:
+- **Bulk Print Checks**
+  Fetches stale letters from the Send-Letter service, marks them as `Created` or `Aborted` based on age/status, and sends a summary to Slack.
 
-```bash
-  ./gradlew build
+- **Bulk Scan Checks**
+  1. Cleans up stale blobs in the Blob-Router service.
+  2. Deletes and reprocesses incomplete envelopes via the Bulk-Scan Processor.
+  3. Retries failed payments (new and update) through the Bulk-Scan Orchestrator.
+
+Results of each run are chunked and delivered to Slack using the configured channel.
+
+## Features
+- Modular triggers using the `Trigger` interface for easy extension.
+- Feign clients for inter-service communication:
+  - `BlobRouterServiceClient`
+  - `BulkScanProcessorClient`
+  - `BulkScanOrchestratorClient`
+  - `SendLetterServiceClient`
+- Configurable via Spring Boot `application.yml` or environment variables.
+- Slack integration with automatic chunking for long messages.
+- Graceful error handling with action summaries.
+
+## Architecture
+
+All triggers implement the `Trigger` interface and are selected at startup based on the `app.trigger-type` property.
+
+## Prerequisites
+- Java 11+ (JDK)
+- Docker & Docker Compose v2
+- Git
+
+## Configuration
+
+| Property                          | Description                                          | Environment Variable                  |
+|-----------------------------------|------------------------------------------------------|---------------------------------------|
+| `url.blob-router-service`         | Base URL for Blob-Router service                     | `BLOB_ROUTER_SERVICE_URL`             |
+| `url.bulk-scan-processor`         | Base URL for Bulk-Scan Processor                     | `BULK_SCAN_PROCESSOR_URL`             |
+| `url.bulk-scan-orchestrator`      | Base URL for Bulk-Scan Orchestrator                  | `BULK_SCAN_ORCHESTRATOR_URL`          |
+| `url.send-letter-service`         | Base URL for Send-Letter service                     | `SEND_LETTER_SERVICE_URL`             |
+| `authorisation.bearer-token`      | Bearer token for authorization headers               | `AUTHORISATION_BEARER_TOKEN`          |
+| `slack.token-daily-checks`        | Slack bot token                                      | `SLACK_TOKEN_DAILY_CHECKS`            |
+| `slack.channel-id-daily-checks`   | Slack channel ID                                     | `SLACK_CHANNEL_ID_DAILY_CHECKS`       |
+| `app.trigger-type`                | Which job to run: `BULK_PRINT_CHECKS` or `BULK_SCAN_CHECKS` | `APP_TRIGGER_TYPE`              |
+| `app.enabled`                     | Enable or disable the runner (`true`/`false`)        | `APP_ENABLED`                         |
+
+Example `application.yml`:
+
+```yaml
+url:
+  blob-router-service: ${BLOB_ROUTER_SERVICE_URL}
+  bulk-scan-processor: ${BULK_SCAN_PROCESSOR_URL}
+  bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL}
+  send-letter-service: ${SEND_LETTER_SERVICE_URL}
+
+authorisation:
+  bearer-token: ${AUTHORISATION_BEARER_TOKEN}
+
+slack:
+  token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS}
+  channel-id-daily-checks: ${SLACK_CHANNEL_ID_DAILY_CHECKS}
+
+app:
+  trigger-type: ${APP_TRIGGER_TYPE:BULK_PRINT_CHECKS}
+  enabled: ${APP_ENABLED:true}
 ```
 
-### Running the application
+## Building/Running the Application
 
-Create the image of the application by executing the following command:
+Use the Gradle wrapper to build the jar:
+`./gradlew clean build`
 
-```bash
-  ./gradlew assemble
-```
+Make sure the environment variables are set (refer to testing section).
 
-Note: Docker Compose V2 is highly recommended for building and running the application.
-In the Compose V2 old `docker-compose` command is replaced with `docker compose`.
+## Testing
+Run unit and integration tests:
+`./gradlew test`
 
-Create docker image:
-
-```bash
-  docker compose build
-```
-
-Run the distribution (created in `build/install/bsp-cron-trigger` directory)
-by executing the following command:
-
-```bash
-  docker compose up
-```
-
-This will start the API container exposing the application's port
-(set to `5678` in this template app).
-
-In order to test if the application is up, you can call its health endpoint:
-
-```bash
-  curl http://localhost:5678/health
-```
-
-You should get a response similar to this:
-
-```
-  {"status":"UP","diskSpace":{"status":"UP","total":249644974080,"free":137188298752,"threshold":10485760}}
-```
-
-### Alternative script to run application
-
-To skip all the setting up and building, just execute the following command:
-
-```bash
-./bin/run-in-docker.sh
-```
-
-For more information:
-
-```bash
-./bin/run-in-docker.sh -h
-```
-
-Script includes bare minimum environment variables necessary to start api instance. Whenever any variable is changed or any other script regarding docker image/container build, the suggested way to ensure all is cleaned up properly is by this command:
-
-```bash
-docker compose rm
-```
-
-It clears stopped containers correctly. Might consider removing clutter of images too, especially the ones fiddled with:
-
-```bash
-docker images
-
-docker image rm <image-id>
-```
-
-There is no need to remove postgres and java or similar core images.
-
-## Running Tests
-
-If you want to run both unit and integration tests, simply run `./gradlew build`.
-Alternatively you can run them individually or as a group through IntelliJ.
-
-Note that if your local instance of the relevant services are not running, you will get an error.
-If you want to simply run everything against AAT, ensure you run the following beforehand:
+To test against AAT (configure service URLs beforehand):
 ```shell
-export SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
-export BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
-export BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
-export BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
+export SEND_LETTER_SERVICE_URL="http://...-send-letter-service-aat..."
+export BLOB_ROUTER_SERVICE_URL="http://...-blob-router-aat..."
+export BULK_SCAN_PROCESSOR_URL="http://...-bulk-scan-processor-aat..."
+export BULK_SCAN_ORCHESTRATOR_URL="http://...-bulk-scan-orchestrator-aat..."
+./gradlew build
 ```
 
-Ensure your VPN in on, obviously :)
+## Contributing
+
+Fork the repository
+
+Create a feature branch (git checkout -b feature/XYZ)
+
+Commit your changes
+
+Open a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT License. See the LICENSE file f
+
+
 
