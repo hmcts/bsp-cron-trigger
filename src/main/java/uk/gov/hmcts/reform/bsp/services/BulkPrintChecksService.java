@@ -49,7 +49,7 @@ public class BulkPrintChecksService {
         StaleLetterResponse resp = fetchStaleLettersOrAbort();
 
         List<String> actions = new ArrayList<>();
-        Instant oneWeekAgo = Instant.now().minusSeconds(7 * 24 * 60 * 60);
+        Instant oneWeekAgo = Instant.now().minusSeconds(7 * 24 * 60 * 60L);
         for (StaleLetter letter : resp.getStaleLetters()) {
             Instant created = letter.getCreatedAt().toInstant(ZoneOffset.UTC);
             try {
