@@ -83,7 +83,7 @@ class BulkScanChecksServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Failed to remove stale blobs: oops blobs"));
+        assertTrue(captor.getValue().contains("Failed to remove stale blobs. Check App insights."));
     }
 
     @Test
@@ -109,7 +109,7 @@ class BulkScanChecksServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Delete envelope " + id + " ➞ delete error"));
+        assertTrue(captor.getValue().contains("Delete envelope " + id + " failed."));
     }
 
     @Test
@@ -139,7 +139,7 @@ class BulkScanChecksServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Reprocess envelope " + id + " ➞ reprocerr"));
+        assertTrue(captor.getValue().contains("Reprocess envelope " + id + " failed."));
     }
 
     @Test

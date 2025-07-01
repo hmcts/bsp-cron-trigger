@@ -31,6 +31,20 @@ public class BulkPrintChecksService {
         this.slackHelper = slackHelper;
     }
 
+    /**
+     * Runs the daily check process for bulk print letters.
+     * <ol>
+     *   <li>Fetch the list of stale letters (older than a set threshold).</li>
+     *   <li>For each letter:
+     *       <ul>
+     *         <li>If the letter is older than one week or still in "Uploaded" status, mark it as "Aborted".</li>
+     *         <li>Otherwise, mark it as "Created".</li>
+     *       </ul>
+     *   </li>
+     *   <li>Collect any failures to notify for investigation.</li>
+     *   <li>Send a Slack message summarising today's actions.</li>
+     * </ol>
+     */
     public void runDailyChecks() {
         StaleLetterResponse resp = fetchStaleLettersOrAbort();
 
@@ -65,13 +79,20 @@ public class BulkPrintChecksService {
         slackHelper.sendLongMessage(sb.toString());
     }
 
+    /**
+     * Fetches stale letters from the SendLetterService, sending an alert
+     * to Slack and aborting the process if the fetch fails.
+     *
+     * @return response containing the list of stale letters
+     * @throws IllegalStateException if unable to fetch letters
+     */
     private StaleLetterResponse fetchStaleLettersOrAbort() {
         try {
             return letterClient.getStaleLetters();
         } catch (Exception e) {
             log.error("Error fetching stale letters", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not fetch stale letters!*\n> " + e.getMessage()
+                "*:rotating_light: Could not fetch stale letters! *\n> "
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }

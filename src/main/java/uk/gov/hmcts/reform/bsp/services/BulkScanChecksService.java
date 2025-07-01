@@ -42,6 +42,15 @@ public class BulkScanChecksService {
         this.slackHelper = slackHelper;
     }
 
+    /**
+     * Entry point to run all daily checks:
+     * <ul>
+     *   <li>Blob cleanup</li>
+     *   <li>Envelope processing</li>
+     *   <li>Payment retries</li>
+     * </ul>
+     * A summary of any actions or errors is sent to Slack.
+     */
     public void runDailyChecks() {
         List<String> actions = new ArrayList<>();
 
@@ -49,18 +58,30 @@ public class BulkScanChecksService {
         handleEnvelopeProcessing(actions);
         handlePaymentRetries(actions);
 
-        log.debug("Daily checks completed, actions: {}", actions);
         sendSlackSummary(actions);
     }
 
+    /**
+     * Deletes stale blobs older than STALE_HOURS.
+     * @param actions list to record any failures
+     */
     private void handleBlobCleanup(List<String> actions) {
         try {
             blobClient.deleteAllStaleBlobs(STALE_HOURS);
         } catch (Exception e) {
-            actions.add("Failed to remove stale blobs: " + e.getMessage());
+            log.error("Error while deleting stale blobs", e);
+            actions.add("Failed to remove stale blobs. Check App insights.");
         }
     }
 
+    /**
+     * Retrieves and processes stale envelopes.
+     * <ol>
+     *   <li>Delete stale envelopes</li>
+     *   <li>Reprocess envelopes that were successfully deleted</li>
+     * </ol>
+     * @param actions list to record any failures
+     */
     private void handleEnvelopeProcessing(List<String> actions) {
         SearchResult<EnvelopeInfo> staleEnvs = fetchStaleEnvelopes();
         for (EnvelopeInfo info : staleEnvs.getData()) {
@@ -72,6 +93,10 @@ public class BulkScanChecksService {
         }
     }
 
+    /**
+     * Fetches stale incomplete envelopes from the processor; sends a Slack alert on failure.
+     * @return SearchResult containing EnvelopeInfo list, never null
+     */
     private SearchResult<EnvelopeInfo> fetchStaleEnvelopes() {
         SearchResult<EnvelopeInfo> resp;
         try {
@@ -79,7 +104,7 @@ public class BulkScanChecksService {
         } catch (Exception e) {
             log.error("Error fetching stale envelopes", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not fetch stale envelopes!*\n> " + e.getMessage()
+                "*:rotating_light: Could not fetch stale envelopes!*\n> "
             );
             resp = null;
         }
@@ -94,16 +119,28 @@ public class BulkScanChecksService {
         return resp;
     }
 
+    /**
+     * Attempts to delete a stale envelope and record failures.
+     * @param id      envelope ID
+     * @param actions list to record failures
+     * @return true if deletion succeeded, false otherwise
+     */
     private boolean tryDeleteEnvelope(String id, List<String> actions) {
         try {
             processorClient.deleteStaleEnvelope(id, STALE_HOURS);
             return true;
         } catch (Exception e) {
-            actions.add("Delete envelope " + id + " ➞ " + e.getMessage());
+            log.error("Error deleting stale envelope: {} details: {}", id, e.getMessage());
+            actions.add("Delete envelope " + id + " failed.");
             return false;
         }
     }
 
+    /**
+     * Attempts to reprocess an envelope, recording failures.
+     * @param id      envelope ID
+     * @param actions list to record failures
+     */
     private void tryReprocessEnvelope(String id, List<String> actions) {
         try {
             processorClient.reprocessEnvelope(
@@ -111,10 +148,16 @@ public class BulkScanChecksService {
                 UUID.fromString(id)
             );
         } catch (Exception e) {
-            actions.add("Reprocess envelope " + id + " ➞ " + e.getMessage());
+            log.error("Error reprocessing envelope {}: {}", id, e.getMessage());
+            actions.add("Reprocess envelope " + id + " failed.");
         }
     }
 
+    /**
+     * Fetches failed payments and retries both update and new payments,
+     * aggregating any errors.
+     * @param actions list to record failures
+     */
     private void handlePaymentRetries(List<String> actions) {
         try {
             actions.addAll(
@@ -134,11 +177,19 @@ public class BulkScanChecksService {
         } catch (Exception e) {
             log.error("Failed to retry payments", e);
             actions.add(
-                "Failed to retry payments—please investigate manually: " + e.getMessage()
+                "Failed to retry payments."
             );
         }
     }
 
+    /**
+     * Generic helper to retry a list of payments, capturing errors.
+     * @param payments list of payment objects
+     * @param retryFn  function to call to retry a payment
+     * @param type     descriptive label for the payment type
+     * @param <T>      payment type with getId() method
+     * @return list of error messages for retries that failed
+     */
     private <T> List<String> retryPayments(
         List<T> payments,
         java.util.function.Consumer<T> retryFn,
@@ -159,6 +210,12 @@ public class BulkScanChecksService {
         return errs;
     }
 
+    /**
+     * Uses reflection to safely extract the ID from a payment object.
+     * @param p payment object
+     * @param <T> type of the payment object
+     * @return string representation of the ID, or placeholder on failure
+     */
     private <T> String safeGetId(T p) {
         try {
             Object idObj = p.getClass().getMethod("getId").invoke(p);
@@ -171,6 +228,10 @@ public class BulkScanChecksService {
         }
     }
 
+    /**
+     * Sends a summary of today's actions (or lack thereof) to Slack.
+     * @param actions list of action descriptions
+     */
     private void sendSlackSummary(List<String> actions) {
         StringBuilder sb = new StringBuilder("*:spiral_note_pad: Today's Bulk Scan Actions:*\n");
         if (actions.isEmpty()) {
