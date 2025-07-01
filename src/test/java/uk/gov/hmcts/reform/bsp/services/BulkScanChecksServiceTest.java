@@ -95,32 +95,6 @@ class BulkScanChecksServiceTest {
     }
 
     @Test
-    void runDailyChecks_envelopeDeleteFails_reportsDeleteError() {
-        SearchResult<String> emptyBlobs = new SearchResult<>();
-        emptyBlobs.setData(Collections.emptyList());
-        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
-
-        EnvelopeInfo info = new EnvelopeInfo();
-        UUID id = UUID.randomUUID();
-        info.setEnvelopeId(id);
-        SearchResult<EnvelopeInfo> sr = new SearchResult<>();
-        sr.setData(List.of(info));
-        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(sr);
-
-        when(processorClient.deleteStaleEnvelope(id.toString(), 168))
-            .thenThrow(new RuntimeException("delete error"));
-
-        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
-        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
-
-        service.runDailyChecks();
-
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Delete envelope " + id + " failed."));
-    }
-
-    @Test
     void runDailyChecks_envelopeReprocessFails_reportsReprocessError() {
         SearchResult<String> emptyBlobs = new SearchResult<>();
         emptyBlobs.setData(Collections.emptyList());
@@ -135,7 +109,6 @@ class BulkScanChecksServiceTest {
 
         SearchResult<UUID> deleteRes = new SearchResult<>();
         deleteRes.setData(Collections.emptyList());
-        when(processorClient.deleteStaleEnvelope(id.toString(), 168)).thenReturn(deleteRes);
 
         doThrow(new RuntimeException("reprocerr"))
             .when(processorClient).reprocessEnvelope("Bearer dummy-token", id);

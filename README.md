@@ -43,7 +43,7 @@ Results of each run are chunked and delivered to Slack using the configured chan
 All triggers implement the `Trigger` interface and are selected at startup based on the `app.trigger-type` property.
 
 ## Prerequisites
-- Java 11+ (JDK)
+- Java 21+ (JDK)
 - Docker & Docker Compose v2
 - Git
 
@@ -92,13 +92,15 @@ Make sure the environment variables are set (refer to testing section).
 ## Testing
 Run unit and integration tests:
 `./gradlew test`
+`./gradlew integration`
 
 To test against AAT (configure service URLs beforehand):
 ```shell
-export SEND_LETTER_SERVICE_URL="http://...-send-letter-service-aat..."
-export BLOB_ROUTER_SERVICE_URL="http://...-blob-router-aat..."
-export BULK_SCAN_PROCESSOR_URL="http://...-bulk-scan-processor-aat..."
-export BULK_SCAN_ORCHESTRATOR_URL="http://...-bulk-scan-orchestrator-aat..."
+export SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
+export BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
+export BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
+export BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
+ACTIONS_API_KEY=<needed from key vault>
 ./gradlew build
 ```
 

@@ -86,9 +86,6 @@ public class BulkScanChecksService {
         SearchResult<EnvelopeInfo> staleEnvs = fetchStaleEnvelopes();
         for (EnvelopeInfo info : staleEnvs.getData()) {
             String id = info.getEnvelopeId().toString();
-            if (!tryDeleteEnvelope(id, actions)) {
-                continue;
-            }
             tryReprocessEnvelope(id, actions);
         }
     }
@@ -117,23 +114,6 @@ public class BulkScanChecksService {
             return empty;
         }
         return resp;
-    }
-
-    /**
-     * Attempts to delete a stale envelope and record failures.
-     * @param id      envelope ID
-     * @param actions list to record failures
-     * @return true if deletion succeeded, false otherwise
-     */
-    private boolean tryDeleteEnvelope(String id, List<String> actions) {
-        try {
-            processorClient.deleteStaleEnvelope(id, STALE_HOURS);
-            return true;
-        } catch (Exception e) {
-            log.error("Error deleting stale envelope: {} details: {}", id, e.getMessage());
-            actions.add("Delete envelope " + id + " failed.");
-            return false;
-        }
     }
 
     /**
