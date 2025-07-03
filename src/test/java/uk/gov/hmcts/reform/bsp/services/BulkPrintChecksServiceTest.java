@@ -16,8 +16,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -63,12 +65,13 @@ class BulkPrintChecksServiceTest {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper, times(1)).sendLongMessage(captor.capture());
 
-        String expected =
-            "*:spiral_note_pad: Today's Bulk Print Actions:*\n"
-            + "• Investigate Letter c89ad43b-5079-47b2-9984-8a122e115d06\n"
-            + "• Investigate Letter c89ad43b-5079-47b2-9984-8a122e115d07\n";
-
-        assertEquals(expected, captor.getValue());
+        String actual = captor.getValue();
+        assertTrue(actual.contains("Bulk Print"),
+                   "expected header to mention Bulk Print, was:\n" + actual);
+        assertTrue(actual.contains("Investigate Letter c89ad43b-5079-47b2-9984-8a122e115d06"),
+                   "missing first investigate line");
+        assertTrue(actual.contains("Investigate Letter c89ad43b-5079-47b2-9984-8a122e115d07"),
+                   "missing second investigate line");
     }
 
     @Test
@@ -89,11 +92,12 @@ class BulkPrintChecksServiceTest {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper, times(1)).sendLongMessage(captor.capture());
 
-        String expected =
-            "*:spiral_note_pad: Today's Bulk Print Actions:*\n"
-                + "> No actions; all looks good! :tada:";
+        String actual = captor.getValue();
 
-        assertEquals(expected, captor.getValue());
+        assertAll("bulk-print no-issues summary",
+                  () -> assertTrue(actual.contains("Bulk Print Daily Check")),
+                  () -> assertTrue(actual.contains("All clear! No print issues detected"))
+        );
     }
 
     @Test

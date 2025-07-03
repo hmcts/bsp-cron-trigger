@@ -9,7 +9,9 @@ import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,10 +72,14 @@ public class BulkPrintChecksService {
             }
         }
 
-        StringBuilder sb = new StringBuilder("*:spiral_note_pad: Today's Bulk Print Actions:*\n");
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        StringBuilder sb = new StringBuilder(
+            String.format("*:printer: Bulk Print Daily Check (%s)*\n", timestamp)
+        );
         if (actions.isEmpty()) {
-            sb.append("> No actions; all looks good! :tada:");
+            sb.append("> ✅ All clear! No print issues detected. :tada:");
         } else {
+            sb.append("> ❗ Print issues found:\n");
             actions.forEach(a -> sb.append("• ").append(a).append("\n"));
         }
         slackHelper.sendLongMessage(sb.toString());
