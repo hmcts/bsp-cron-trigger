@@ -11,6 +11,8 @@ import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -213,10 +215,14 @@ public class BulkScanChecksService {
      * @param actions list of action descriptions
      */
     private void sendSlackSummary(List<String> actions) {
-        StringBuilder sb = new StringBuilder("*:spiral_note_pad: Today's Bulk Scan Actions:*\n");
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        StringBuilder sb = new StringBuilder(
+            String.format("*:mag: Bulk Scan Daily Check (%s)*\n", timestamp)
+        );
         if (actions.isEmpty()) {
-            sb.append("> No actions; all looks good! :tada:");
+            sb.append("> ✅ All clear! No scan issues detected. :tada:");
         } else {
+            sb.append("> ❗ Scan issues found:\n");
             actions.forEach(a -> sb.append("• ").append(a).append("\n"));
         }
         slackHelper.sendLongMessage(sb.toString());

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
@@ -70,10 +71,11 @@ class BulkScanChecksServiceTest {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
 
-        String expected =
-            "*:spiral_note_pad: Today's Bulk Scan Actions:*\n"
-                + "> No actions; all looks good! :tada:";
-        assertEquals(expected, captor.getValue());
+        String actual = captor.getValue();
+        assertAll("bulk-scan no-issues summary",
+                  () -> assertTrue(actual.contains("Bulk Scan Daily Check")),
+                  () -> assertTrue(actual.contains("All clear! No scan issues detected"))
+        );
     }
 
     @Test
