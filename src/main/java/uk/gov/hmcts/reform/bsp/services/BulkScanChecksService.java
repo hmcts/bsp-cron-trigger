@@ -88,7 +88,8 @@ public class BulkScanChecksService {
         SearchResult<EnvelopeInfo> staleEnvs = fetchStaleEnvelopes();
         for (EnvelopeInfo info : staleEnvs.getData()) {
             String id = info.getEnvelopeId().toString();
-            tryReprocessEnvelope(id, actions);
+            String container = info.getContainer();
+            tryReprocessEnvelope(id, actions, container);
         }
     }
 
@@ -123,15 +124,15 @@ public class BulkScanChecksService {
      * @param id      envelope ID
      * @param actions list to record failures
      */
-    private void tryReprocessEnvelope(String id, List<String> actions) {
+    private void tryReprocessEnvelope(String id, List<String> actions, String container) {
         try {
             processorClient.reprocessEnvelope(
                 "Bearer " + authProps.getBearerToken(),
                 UUID.fromString(id)
             );
         } catch (Exception e) {
-            log.error("Error reprocessing envelope {}: {}", id, e.getMessage());
-            actions.add("Reprocess envelope " + id + " failed.");
+            log.error("Error reprocessing {} envelope {}: {}", container, id, e.getMessage());
+            actions.add("Reprocess envelope " + id + " failed for service: " + container);
         }
     }
 

@@ -72,9 +72,10 @@ class BulkScanChecksServiceTest {
         verify(slackHelper).sendLongMessage(captor.capture());
 
         String actual = captor.getValue();
-        assertAll("bulk-scan no-issues summary",
-                  () -> assertTrue(actual.contains("Bulk Scan Daily Check")),
-                  () -> assertTrue(actual.contains("All clear! No scan issues detected"))
+        assertAll(
+            "bulk-scan no-issues summary",
+            () -> assertTrue(actual.contains("Bulk Scan Daily Check")),
+            () -> assertTrue(actual.contains("All clear! No scan issues detected"))
         );
     }
 
@@ -105,6 +106,7 @@ class BulkScanChecksServiceTest {
         EnvelopeInfo info = new EnvelopeInfo();
         UUID id = UUID.randomUUID();
         info.setEnvelopeId(id);
+        info.setContainer("Kittens");
         SearchResult<EnvelopeInfo> sr = new SearchResult<>();
         sr.setData(List.of(info));
         when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(sr);
@@ -122,7 +124,8 @@ class BulkScanChecksServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Reprocess envelope " + id + " failed."));
+        assertTrue(captor.getValue().contains("Reprocess envelope "
+                                                  + id + " failed for service: " + info.getContainer()));
     }
 
     @Test
