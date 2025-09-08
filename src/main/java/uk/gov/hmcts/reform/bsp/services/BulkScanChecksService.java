@@ -11,7 +11,8 @@ import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,9 +88,7 @@ public class BulkScanChecksService {
     private void handleEnvelopeProcessing(List<String> actions) {
         SearchResult<EnvelopeInfo> staleEnvs = fetchStaleEnvelopes();
         for (EnvelopeInfo info : staleEnvs.getData()) {
-            String id = info.getEnvelopeId().toString();
-            String container = info.getContainer();
-            tryReprocessEnvelope(id, actions, container);
+            tryReprocessEnvelope(info.getEnvelopeId().toString(), actions, info.getContainer(), info.getFileName());
         }
     }
 
@@ -123,8 +122,9 @@ public class BulkScanChecksService {
      * Attempts to reprocess an envelope, recording failures.
      * @param id      envelope ID
      * @param actions list to record failures
+     * @param zipFileName the zip file name of the envelope
      */
-    private void tryReprocessEnvelope(String id, List<String> actions, String container) {
+    private void tryReprocessEnvelope(String id, List<String> actions, String container, String zipFileName) {
         try {
             processorClient.reprocessEnvelope(
                 "Bearer " + authProps.getBearerToken(),
@@ -132,7 +132,8 @@ public class BulkScanChecksService {
             );
         } catch (Exception e) {
             log.error("Error reprocessing {} envelope {}: {}", container, id, e.getMessage());
-            actions.add("Reprocess envelope " + id + " failed for service: " + container);
+            actions.add("Reprocess failed for *" + container + "* - Envelope: `"
+                            + id + "` File name: `" + zipFileName + "`");
         }
     }
 
@@ -216,7 +217,8 @@ public class BulkScanChecksService {
      * @param actions list of action descriptions
      */
     private void sendSlackSummary(List<String> actions) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
+        String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         StringBuilder sb = new StringBuilder(
             String.format("*:mag: Bulk Scan Daily Check (%s)*\n", timestamp)
         );
