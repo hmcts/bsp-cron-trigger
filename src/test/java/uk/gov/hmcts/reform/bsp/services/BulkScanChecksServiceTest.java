@@ -107,6 +107,7 @@ class BulkScanChecksServiceTest {
         UUID id = UUID.randomUUID();
         info.setEnvelopeId(id);
         info.setContainer("Kittens");
+        info.setFileName("test-file.zip");
         SearchResult<EnvelopeInfo> sr = new SearchResult<>();
         sr.setData(List.of(info));
         when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(sr);
@@ -124,8 +125,11 @@ class BulkScanChecksServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Reprocess envelope "
-                                                  + id + " failed for service: " + info.getContainer()));
+        String expected = "Reprocess failed for *" + info.getContainer() + "* - Envelope: `"
+            + id + "` File name: `" + info.getFileName() + "`";
+
+        assertTrue(captor.getValue().contains(expected));
+
     }
 
     @Test
