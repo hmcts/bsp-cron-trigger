@@ -9,8 +9,9 @@ import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,8 @@ public class BulkPrintChecksService {
             }
         }
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
+        String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         StringBuilder sb = new StringBuilder(
             String.format("*:printer: Bulk Print Daily Check (%s)*\n", timestamp)
         );
