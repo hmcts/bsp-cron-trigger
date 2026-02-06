@@ -1,20 +1,22 @@
 package uk.gov.hmcts.reform.bsp.services;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
+import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
+import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
-import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -49,42 +51,84 @@ public class BulkPrintChecksService {
      * </ol>
      */
     public void runDailyChecks() {
-        StaleLetterResponse resp = fetchStaleLettersOrAbort();
 
-        List<String> actions = new ArrayList<>();
-        Instant oneWeekAgo = Instant.now().minusSeconds(7 * 24 * 60 * 60L);
-        for (StaleLetter letter : resp.getStaleLetters()) {
-            Instant created = letter.getCreatedAt().toInstant(ZoneOffset.UTC);
-            try {
-                if (created.isBefore(oneWeekAgo) || "Uploaded".equals(letter.getStatus())) {
-                    letterClient.markAborted(
-                        letter.getId().toString(),
-                        "Bearer " + authProps.getBearerToken()
-                    );
-                } else {
-                    letterClient.markCreated(
-                        letter.getId().toString(),
-                        "Bearer " + authProps.getBearerToken()
-                    );
-                }
-            } catch (Exception e) {
-                log.warn("Exception occurred while marking aborted or created {}", letter.getId(), e);
-                actions.add("Investigate Letter " + letter.getId());
+        final List<String> messages = new ArrayList<>();
+        final AtomicBoolean flagErrors = new AtomicBoolean(false);
+
+        List<PostedReportTaskResponse> mptResp = runProcessReportsTaskOrAbort();
+        if (mptResp.isEmpty()) {
+            messages.add(" ℹ️ *Process Reports*: Complete; no reports processed.");
+        } else {
+            for (PostedReportTaskResponse report : mptResp) {
+                messages.add(String.format(
+                    " ✅ *Process Reports*: %s complete; %d letters marked as posted.",
+                    report.getServiceName(),
+                    report.getMarkedPostedCount()
+                ));
+            }
+        }
+
+        CheckPostedTaskResponse ctResp = runCheckPostedTaskOrAbort();
+        if (ctResp.getMarkedNoReportAbortedCount() <= 0) {
+            messages.add(" ✅ *Check Posted*: Complete; no letters were affected.");
+        } else {
+            flagErrors.compareAndSet(false, true);
+            messages.add(String.format(
+                "❗ *Check Posted*: Complete; %d letters were marked as NO_REPORT_ABORTED.",
+                ctResp.getMarkedNoReportAbortedCount()
+            ));
+        }
+
+        StaleLetterResponse slResp = fetchStaleLettersOrAbort();
+        if (slResp.getCount() > 0) {
+            flagErrors.compareAndSet(false, true);
+            // alert on slack because a report was received and these docs weren't referenced
+            for (StaleLetter letter : slResp.getStaleLetters()) {
+                messages.add(String.format("❗ *Check Stale*: Investigate stale letter: %s ", letter.getId()));
             }
         }
 
         ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
         String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
         StringBuilder sb = new StringBuilder(
-            String.format("*:printer: Bulk Print Daily Check (%s)*\n", timestamp)
+            String.format("*:printer: Bulk Print Daily Check (%s)*\n\n", timestamp)
         );
-        if (actions.isEmpty()) {
-            sb.append("> ✅ All clear! No print issues detected. :tada:");
+
+        // if there are stale letters, or some letters have been set to NO_REPORT_ABORTED,
+        // indicate this in the header of the slack message
+        if (flagErrors.get()) {
+            sb.append(">❗ *Print issues were detected*:\n");
         } else {
-            sb.append("> ❗ Print issues found:\n");
-            actions.forEach(a -> sb.append("• ").append(a).append("\n"));
+            sb.append("> :tada: *No print issues were detected*:\n");
         }
+
+        messages.forEach(a -> sb.append("• ").append(a).append("\n"));
         slackHelper.sendLongMessage(sb.toString());
+    }
+
+    private List<PostedReportTaskResponse> runProcessReportsTaskOrAbort() {
+        try {
+            return letterClient.runProcessReports("Bearer " + authProps.getBearerToken());
+        } catch (Exception e) {
+            log.error("Error running process reports task", e);
+            slackHelper.sendLongMessage(
+                "*:rotating_light: Could not run process reports task! *\n> "
+            );
+            throw new IllegalStateException("Aborting bulk‐print checks", e);
+        }
+    }
+
+    private CheckPostedTaskResponse runCheckPostedTaskOrAbort() {
+        try {
+            return letterClient.runCheckPosted("Bearer " + authProps.getBearerToken());
+        } catch (Exception e) {
+            log.error("Error running check posted task", e);
+            slackHelper.sendLongMessage(
+                "*:rotating_light: Could not run check posted task! *\n> "
+            );
+            throw new IllegalStateException("Aborting bulk‐print checks", e);
+        }
     }
 
     /**
