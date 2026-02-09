@@ -56,7 +56,7 @@ public class BulkPrintChecksService {
         final AtomicBoolean flagErrors = new AtomicBoolean(false);
 
         List<PostedReportTaskResponse> mptResp = runProcessReportsTaskOrAbort();
-        if (mptResp.isEmpty()) {
+        if (mptResp == null || mptResp.isEmpty()) {
             messages.add(" ℹ️ *Process Reports*: Complete; no reports processed.");
         } else {
             for (PostedReportTaskResponse report : mptResp) {
