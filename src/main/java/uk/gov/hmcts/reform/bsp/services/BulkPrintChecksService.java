@@ -39,16 +39,31 @@ public class BulkPrintChecksService {
     /**
      * Runs the daily check process for bulk print letters.
      * <ol>
-     *   <li>Fetch the list of stale letters (older than a set threshold).</li>
-     *   <li>For each letter:
-     *       <ul>
-     *         <li>If the letter is older than one week or still in "Uploaded" status, mark it as "Aborted".</li>
-     *         <li>Otherwise, mark it as "Created".</li>
-     *       </ul>
+     *   <li>Trigger the process-reports task on the send-letters-service, then:</li>
+     *     <ul>
+     *       <li>If no reports have been received, add an info message.</li>
+     *       <li>Otherwise, for each response:
+     *         <ul>
+     *           <li>If the report is marked as "processing failed", add an alert containing the message.</li>
+     *           <li>Otherwise, add an info message detailing the report code and the number of posted letters.</li>
+     *         </ul>
+     *       </li>
+     *     </ul>
      *   </li>
-     *   <li>Collect any failures to notify for investigation.</li>
-     *   <li>Send a Slack message summarising today's actions.</li>
-     * </ol>
+     *   <li>Trigger the check-posted task on the send-letter-service, then:
+     *     <ul>
+     *       <li>If the response show that 0 files have been move to NO_REPORT_ABORTED, add an info message.</li>
+     *       <li>Otherwise, add an alert message.</li>
+     *     </ul>
+     *   </li>
+     *   <li>Fetch the list of stale letters from the send-letter-service, then for each stale letter:
+     *     <ul>
+     *       <li>Generate an alert containing the id of the letter, indicating a need to investigate.</li>
+     *     </ul>
+     *   </li>
+     *   <li>Collect all messages and alerts into a single, formatted message with a summary heading, then post
+     *       that message to the configured Slack channel.</li>
+     * </ol>>
      */
     public void runDailyChecks() {
 
@@ -60,11 +75,22 @@ public class BulkPrintChecksService {
             messages.add(" ℹ️ *Process Reports*: Complete; no reports processed.");
         } else {
             for (PostedReportTaskResponse report : mptResp) {
-                messages.add(String.format(
-                    " ✅ *Process Reports*: %s complete; %d letters marked as posted.",
-                    report.getServiceName(),
-                    report.getMarkedPostedCount()
-                ));
+                if (report.isProcessingFailed()) {
+                    flagErrors.set(true);
+                    messages.add(String.format(
+                        " :rotatinglight2: *Process Reports*: %s (%s) ERROR: %s",
+                        report.getReportCode(),
+                        report.isInternational() ? "international" : "domestic",
+                        report.getErrorMessage()
+                    ));
+                } else {
+                    messages.add(String.format(
+                        " ✅ *Process Reports*: %s (%s) complete; %d letters marked as posted.",
+                        report.getReportCode(),
+                        report.isInternational() ? "international" : "domestic",
+                        report.getMarkedPostedCount()
+                    ));
+                }
             }
         }
 
@@ -72,7 +98,7 @@ public class BulkPrintChecksService {
         if (ctResp.getMarkedNoReportAbortedCount() <= 0) {
             messages.add(" ✅ *Check Posted*: Complete; no letters were affected.");
         } else {
-            flagErrors.compareAndSet(false, true);
+            flagErrors.set(true);
             messages.add(String.format(
                 "❗ *Check Posted*: Complete; %d letters were marked as NO_REPORT_ABORTED.",
                 ctResp.getMarkedNoReportAbortedCount()
@@ -81,7 +107,7 @@ public class BulkPrintChecksService {
 
         StaleLetterResponse slResp = fetchStaleLettersOrAbort();
         if (slResp.getCount() > 0) {
-            flagErrors.compareAndSet(false, true);
+            flagErrors.set(true);
             // alert on slack because a report was received and these docs weren't referenced
             for (StaleLetter letter : slResp.getStaleLetters()) {
                 messages.add(String.format("❗ *Check Stale*: Investigate stale letter: %s ", letter.getId()));
@@ -98,13 +124,14 @@ public class BulkPrintChecksService {
         // if there are stale letters, or some letters have been set to NO_REPORT_ABORTED,
         // indicate this in the header of the slack message
         if (flagErrors.get()) {
-            sb.append(">❗ *Print issues were detected*:\n");
+            sb.append("> :rotatinglight2: *Print issues were detected* :rotatinglight2:\n");
         } else {
-            sb.append("> :tada: *No print issues were detected*:\n");
+            sb.append("> :tada: *No print issues were detected* :tada:\n");
         }
 
         messages.forEach(a -> sb.append("• ").append(a).append("\n"));
         slackHelper.sendLongMessage(sb.toString());
+        log.info("SLACK MESSAGE: \n\n{}", sb.toString());
     }
 
     private List<PostedReportTaskResponse> runProcessReportsTaskOrAbort() {
