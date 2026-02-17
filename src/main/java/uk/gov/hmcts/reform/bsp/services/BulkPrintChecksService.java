@@ -87,7 +87,7 @@ public class BulkPrintChecksService {
                 if (report.isProcessingFailed()) {
                     result = false;
                     messages.add(String.format(
-                        " :rotatinglight2: *Process Reports*: %s (%s) ERROR: %s",
+                        " ❗ *Process Reports*: %s (%s) ERROR: %s",
                         report.getReportCode(),
                         scope,
                         report.getErrorMessage()
@@ -127,7 +127,7 @@ public class BulkPrintChecksService {
             result = false;
             // alert on slack because a report was received and these docs weren't referenced
             for (StaleLetter letter : slResp.getStaleLetters()) {
-                messages.add(String.format("❗ *Check Stale*: Investigate stale letter: %s ", letter.getId()));
+                messages.add(String.format(" ❗ *Check Stale*: Investigate stale letter: %s ", letter.getId()));
             }
         }
         return result;
