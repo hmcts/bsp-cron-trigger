@@ -8,7 +8,7 @@ import lombok.Data;
 public class PostedReportTaskResponse {
     final String reportCode;
     final LocalDate reportDate;
-    final boolean isInternational;
+    final boolean international;
 
     long markedPostedCount = 0;
 
