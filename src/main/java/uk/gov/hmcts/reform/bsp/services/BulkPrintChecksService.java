@@ -166,7 +166,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error running process reports task", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not run process reports task! *\n> "
+                String.format("*:rotating_light: Could not run process reports task: %s *%n> ",e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }
@@ -184,7 +184,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error running check posted task", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not run check posted task! *\n> "
+                String.format("*:rotating_light: Could not run check posted task: %s *%n> ",e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }
@@ -203,7 +203,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error fetching stale letters", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not fetch stale letters! *\n> "
+                String.format("*:rotating_light: Could not fetch stale letters: %s *%n> ",e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }

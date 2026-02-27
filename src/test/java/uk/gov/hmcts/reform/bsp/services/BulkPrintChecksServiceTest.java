@@ -143,7 +143,7 @@ class BulkPrintChecksServiceTest {
         prtrA.setMarkedPostedCount(100);
 
         when(letterClient.runProcessReports(anyString())).thenReturn(
-          List.of(prtrA, prtrB, prtrC, prtrD)
+            List.of(prtrA, prtrB, prtrC, prtrD)
         );
 
         when(letterClient.runCheckPosted(any(String.class))).thenReturn(new CheckPostedTaskResponse(0));
@@ -161,7 +161,7 @@ class BulkPrintChecksServiceTest {
             "SSCS-IB (domestic) ERROR: error message",
             "SSCS-REFORM (domestic) complete; 0 letters marked as posted",
             "NFDIV (international) complete; 0 letters marked as posted"
-            );
+        );
     }
 
     @Test
