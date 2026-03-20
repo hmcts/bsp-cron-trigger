@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -66,6 +67,10 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+
         service.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -89,6 +94,10 @@ class BulkScanChecksServiceTest {
         when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -120,6 +129,10 @@ class BulkScanChecksServiceTest {
 
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -156,6 +169,10 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.retryNewPayment(newId.toString()))
             .thenThrow(new RuntimeException("new payment fail"));
 
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+
         service.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -179,6 +196,10 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments())
             .thenThrow(new RuntimeException("fetch-oops"));
 
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+
         service.runDailyChecks();
 
         ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
@@ -199,6 +220,10 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(null);
         when(orchestratorClient.getFailedNewPayments()).thenReturn(null);
 
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(List.of(new EnvelopeInfo()));
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+
         service.runDailyChecks();
 
         ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
@@ -206,6 +231,53 @@ class BulkScanChecksServiceTest {
         String out = cap.getValue();
         assertTrue(out.contains("Failed to fetch update payments"));
         assertTrue(out.contains("Failed to fetch new payments"));
+    }
+
+    @Test
+    void runDailyChecks_xbpFilesNotFound_reportsXbpError() {
+        SearchResult<String> emptyBlobs = new SearchResult<>();
+        emptyBlobs.setData(Collections.emptyList());
+        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
+
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
+
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+
+        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
+        xbpFiles.setData(Collections.emptyList());
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+
+        service.runDailyChecks();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(slackHelper).sendLongMessage(captor.capture());
+        assertTrue(captor.getValue().contains("No files from XBP have come through for today."));
+    }
+
+    @Test
+    void runDailyChecks_xbpCheckFails_reportsXbpCheckError() {
+        SearchResult<String> emptyBlobs = new SearchResult<>();
+        emptyBlobs.setData(Collections.emptyList());
+        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
+
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
+
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+
+        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString()))
+            .thenThrow(new RuntimeException("xbp-fail"));
+
+        service.runDailyChecks();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(slackHelper).sendLongMessage(captor.capture());
+        assertTrue(captor.getValue().contains("Failed to check XBP files. Check App insights."));
     }
 
     @Test

@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -60,8 +61,27 @@ public class BulkScanChecksService {
         handleBlobCleanup(actions);
         handleEnvelopeProcessing(actions);
         handlePaymentRetries(actions);
+        checkXbpFiles(actions);
 
         sendSlackSummary(actions);
+    }
+
+    /**
+     * Checks that XBP files have been processed today.
+     * @param actions list to record any failures
+     */
+    private void checkXbpFiles(List<String> actions) {
+        try {
+            String today = LocalDate.now().toString();
+            SearchResult<EnvelopeInfo> xbpFiles = processorClient.getEnvelopesByContainerAndDate("xbp", today);
+
+            if (xbpFiles == null || xbpFiles.getData().isEmpty()) {
+                actions.add("No files from XBP have come through for today.");
+            }
+        } catch (Exception e) {
+            log.error("Error while checking XBP files", e);
+            actions.add("Failed to check XBP files. Check App insights.");
+        }
     }
 
     /**

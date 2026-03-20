@@ -33,4 +33,10 @@ public interface BulkScanProcessorClient {
         @RequestHeader(value = AUTHORIZATION) String bearerToken,
         @PathVariable("envelopeId") UUID id
     );
+
+    @GetMapping("/envelopes?container={container}&date={date}")
+    SearchResult<EnvelopeInfo> getEnvelopesByContainerAndDate(
+        @PathVariable("container") String container,
+        @PathVariable("date") String date
+    );
 }
