@@ -6,25 +6,9 @@ def product = "bulk-scan"
 def component = "cron-trigger"
 def channel = '#bsp-build-notices'
 
-def secrets = [
-  'bulk-scan-${env}': [
-    secret('actions-api-key', 'ACTIONS_API_KEY')
-  ]
-]
-
-static LinkedHashMap<String, Object> secret(String secretName, String envVar) {
-  [ $class: 'AzureKeyVaultSecret',
-    secretType: 'Secret',
-    name: secretName,
-    version: '',
-    envVariable: envVar
-  ]
-}
-
 withPipeline(type, product, component) {
   nonServiceApp()
-
-  loadVaultSecrets(secrets)
+  env.INT_ENVS_ENABLED = true
 
   // Needed for integration tests
   env.SEND_LETTER_SERVICE_URL = "http://rpe-send-letter-service-demo.service.core-compute-demo.internal"

@@ -21,6 +21,19 @@ java {
   }
 }
 
+ext.getVaultSecret = { String secretName ->
+  def command = providers.exec {
+    commandLine 'az', 'keyvault', 'secret', 'show',
+      '--vault-name', System.getenv('BSP_KEY_VAULT') ?: 'bulk-scan-aat',
+      '-o', 'tsv',
+      '--query', 'value',
+      '--name', secretName
+  }
+
+  command.result.get().assertNormalExitValue()
+  return command.standardOutput.asText.get().trim()
+}
+
 def configureSourceSet(String name) {
   sourceSets.create(name) { sourceSet ->
     sourceSet.java {
@@ -64,6 +77,30 @@ tasks.register('integration', Test) {
   testClassesDirs = sourceSets.integrationTest.output.classesDirs
   classpath = sourceSets.integrationTest.runtimeClasspath
   failFast = true
+  onlyIf {
+    if (System.getenv('INT_ENVS_ENABLED') != null
+      || System.getenv('ACTIONS_API_KEY') != null) {
+      return true
+    }
+
+    logger.lifecycle('Skipping integration tests; set INT_ENVS_ENABLED=true for live envs or provide ACTIONS_API_KEY')
+    return false
+  }
+
+  doFirst {
+    if (System.getenv('ACTIONS_API_KEY') == null) {
+      def login = providers.exec {
+        commandLine 'az', 'login', '--identity'
+      }
+      login.result.get().assertNormalExitValue()
+      println('Loading actions-api-key from vault')
+      def actionsApiKey = getVaultSecret('actions-api-key')
+      environment 'ACTIONS_API_KEY', actionsApiKey
+      systemProperty 'ACTIONS_API_KEY', actionsApiKey
+    } else {
+      println('Not logging into Azure; ACTIONS_API_KEY found')
+    }
+  }
 }
 
 jacocoTestReport {
