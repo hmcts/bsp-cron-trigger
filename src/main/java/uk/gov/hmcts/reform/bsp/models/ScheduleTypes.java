@@ -4,6 +4,7 @@ import lombok.Getter;
 import uk.gov.hmcts.reform.bsp.triggers.BulkPrintChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.BulkScanChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.Trigger;
+import uk.gov.hmcts.reform.bsp.triggers.XbpChecksTrigger;
 
 /**
  * This class contains the expected types of schedules that could be run.
@@ -11,7 +12,8 @@ import uk.gov.hmcts.reform.bsp.triggers.Trigger;
 @Getter
 public enum ScheduleTypes {
     BULK_SCAN_CHECKS(BulkScanChecksTrigger.class),
-    BULK_PRINT_CHECKS(BulkPrintChecksTrigger.class);
+    BULK_PRINT_CHECKS(BulkPrintChecksTrigger.class),
+    XBP_CHECKS(XbpChecksTrigger.class);
 
     private final Class<? extends Trigger> triggerClass;
 

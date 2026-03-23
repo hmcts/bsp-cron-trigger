@@ -21,7 +21,7 @@ class ScheduleTypesTest {
             .collect(Collectors.toSet());
 
         assertThat(names)
-            .containsExactlyInAnyOrder("BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS");
+            .containsExactlyInAnyOrder("BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS", "XBP_CHECKS");
     }
 
     @Test

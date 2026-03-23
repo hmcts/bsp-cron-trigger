@@ -124,7 +124,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_withNullSlackClient_shouldThrowNullPointerException() {
-        BulkScanChecksService serviceWithNull = new BulkScanChecksService(null, null, null, null, null, null);
+        BulkScanChecksService serviceWithNull = new BulkScanChecksService(null, null, null, null, null);
         assertThrows(NullPointerException.class, serviceWithNull::runDailyChecks);
     }
 }

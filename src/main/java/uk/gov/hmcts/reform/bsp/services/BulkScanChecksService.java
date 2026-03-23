@@ -3,18 +3,14 @@ package uk.gov.hmcts.reform.bsp.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
-import uk.gov.hmcts.reform.bsp.config.feign.BankHolidayClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanOrchestratorClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanProcessorClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
-import uk.gov.hmcts.reform.bsp.models.BankHolidays;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
-import uk.gov.hmcts.reform.bsp.models.ReportSummaryResponse;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,7 +29,6 @@ public class BulkScanChecksService {
     private final BlobRouterServiceClient blobClient;
     private final BulkScanProcessorClient processorClient;
     private final BulkScanOrchestratorClient orchestratorClient;
-    private final BankHolidayClient bankHolidayClient;
     private final SlackMessageHelper slackHelper;
 
     public BulkScanChecksService(
@@ -41,14 +36,12 @@ public class BulkScanChecksService {
         BlobRouterServiceClient blobClient,
         BulkScanProcessorClient processorClient,
         BulkScanOrchestratorClient orchestratorClient,
-        BankHolidayClient bankHolidayClient,
         SlackMessageHelper slackHelper
     ) {
         this.authProps = authProps;
         this.blobClient = blobClient;
         this.processorClient = processorClient;
         this.orchestratorClient = orchestratorClient;
-        this.bankHolidayClient = bankHolidayClient;
         this.slackHelper = slackHelper;
     }
 
@@ -67,33 +60,10 @@ public class BulkScanChecksService {
         handleBlobCleanup(actions);
         handleEnvelopeProcessing(actions);
         handlePaymentRetries(actions);
-        checkXbpFiles(actions);
 
         sendSlackSummary(actions);
     }
 
-    /**
-     * Checks that XBP files have been processed today.
-     * @param actions list to record any failures
-     */
-    private void checkXbpFiles(List<String> actions) {
-        try {
-            String today = LocalDate.now().toString();
-            BankHolidays holidays = bankHolidayClient.getBankHolidays();
-            if (holidays.englandAndWales.events.stream().anyMatch(event -> event.date.equals(today))) {
-                log.info("Today is a bank holiday, skipping XBP file check.");
-                return;
-            }
-            ReportSummaryResponse xbpFiles = blobClient.getBlobReportsByDate(today);
-
-            if (xbpFiles == null || xbpFiles.getTotalReceived() == 0) {
-                actions.add("No files from XBP have come through for today.");
-            }
-        } catch (Exception e) {
-            log.error("Error while checking XBP files", e);
-            actions.add("Failed to check XBP files. Check App insights.");
-        }
-    }
 
     /**
      * Deletes stale blobs older than STALE_HOURS.
