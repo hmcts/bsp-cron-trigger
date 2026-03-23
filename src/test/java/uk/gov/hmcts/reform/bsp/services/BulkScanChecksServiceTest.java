@@ -8,12 +8,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
+import uk.gov.hmcts.reform.bsp.config.feign.BankHolidayClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanOrchestratorClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BulkScanProcessorClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
+import uk.gov.hmcts.reform.bsp.models.RegionBankHolidays;
+import uk.gov.hmcts.reform.bsp.models.BankHolidayEvent;
+import uk.gov.hmcts.reform.bsp.models.BankHolidays;
 import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.Payment;
+import uk.gov.hmcts.reform.bsp.models.ReportSummaryResponse;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 import uk.gov.hmcts.reform.bsp.models.UpdatePayment;
 
@@ -29,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +50,8 @@ class BulkScanChecksServiceTest {
     @Mock
     private BulkScanOrchestratorClient orchestratorClient;
     @Mock
+    private BankHolidayClient bankHolidayClient;
+    @Mock
     private SlackMessageHelper slackHelper;
 
     @InjectMocks
@@ -52,6 +60,12 @@ class BulkScanChecksServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(authProps.getBearerToken()).thenReturn("dummy-token");
+
+        // By default, today is not a bank holiday
+        BankHolidays nonHoliday = new BankHolidays();
+        nonHoliday.englandAndWales = new RegionBankHolidays();
+        nonHoliday.englandAndWales.events = Collections.emptyList();
+        lenient().when(bankHolidayClient.getBankHolidays()).thenReturn(nonHoliday);
     }
 
     @Test
@@ -67,9 +81,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -95,9 +109,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -130,9 +144,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -169,9 +183,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.retryNewPayment(newId.toString()))
             .thenThrow(new RuntimeException("new payment fail"));
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -196,9 +210,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments())
             .thenThrow(new RuntimeException("fetch-oops"));
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -220,9 +234,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(null);
         when(orchestratorClient.getFailedNewPayments()).thenReturn(null);
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(List.of(new EnvelopeInfo()));
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(1);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -246,9 +260,9 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
-        SearchResult<EnvelopeInfo> xbpFiles = new SearchResult<>();
-        xbpFiles.setData(Collections.emptyList());
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString())).thenReturn(xbpFiles);
+        ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
+        xbpFiles.setTotalReceived(0);
+        when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
         service.runDailyChecks();
 
@@ -270,7 +284,7 @@ class BulkScanChecksServiceTest {
         when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
         when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
 
-        when(processorClient.getEnvelopesByContainerAndDate(anyString(), anyString()))
+        when(blobClient.getBlobReportsByDate(anyString()))
             .thenThrow(new RuntimeException("xbp-fail"));
 
         service.runDailyChecks();
@@ -318,5 +332,35 @@ class BulkScanChecksServiceTest {
         );
         assertEquals(1, errsFaulty.size());
         assertEquals("Retry update payment <unknown> ➞ retry-fail", errsFaulty.get(0));
+    }
+
+    @Test
+    void checkXbpFiles_shouldSkip_onBankHoliday() {
+        // Arrange
+        String today = java.time.LocalDate.now().toString();
+        BankHolidays holidays = new BankHolidays();
+        holidays.englandAndWales = new RegionBankHolidays();
+        BankHolidayEvent event = new BankHolidayEvent();
+        event.date = today;
+        holidays.englandAndWales.events = Collections.singletonList(event);
+
+        when(bankHolidayClient.getBankHolidays()).thenReturn(holidays);
+
+        SearchResult<String> emptyBlobs = new SearchResult<>();
+        emptyBlobs.setData(Collections.emptyList());
+        when(blobClient.deleteAllStaleBlobs(168)).thenReturn(emptyBlobs);
+
+        SearchResult<EnvelopeInfo> emptyEnvs = new SearchResult<>();
+        emptyEnvs.setData(Collections.emptyList());
+        when(processorClient.getStaleIncompleteEnvelopes()).thenReturn(emptyEnvs);
+
+        when(orchestratorClient.getFailedUpdatePayments()).thenReturn(Collections.emptyList());
+        when(orchestratorClient.getFailedNewPayments()).thenReturn(Collections.emptyList());
+
+        // Act
+        service.runDailyChecks();
+
+        // Assert
+        verify(blobClient, never()).getBlobReportsByDate(anyString());
     }
 }
