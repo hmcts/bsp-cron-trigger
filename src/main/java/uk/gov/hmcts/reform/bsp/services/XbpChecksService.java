@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.bsp.services;
 
-import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.bsp.config.feign.BankHolidayClient;
@@ -61,9 +60,6 @@ public class XbpChecksService {
             if (xbpFiles == null || xbpFiles.getTotalReceived() == 0) {
                 actions.add("No files from XBP have come through for today.");
             }
-        } catch (FeignException e) {
-            log.error("Feign error while checking XBP files", e);
-            actions.add("Failed to check XBP files due to network error: " + e.getMessage());
         } catch (Exception e) {
             log.error("Error while checking XBP files", e);
             actions.add("Failed to check XBP files. Check App insights.");
