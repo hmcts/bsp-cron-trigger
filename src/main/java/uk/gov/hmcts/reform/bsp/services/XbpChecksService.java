@@ -6,7 +6,6 @@ import uk.gov.hmcts.reform.bsp.config.feign.BankHolidayClient;
 import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.BankHolidays;
-import uk.gov.hmcts.reform.bsp.models.ReportSummaryResponse;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -36,7 +35,7 @@ public class XbpChecksService {
     /**
      * Entry point to run XBP checks.
      */
-    public void runChecks() {
+    public void runDailyChecks() {
         List<String> actions = new ArrayList<>();
 
         checkXbpFiles(actions);
@@ -55,9 +54,7 @@ public class XbpChecksService {
                 log.info("Today is a bank holiday, skipping XBP file check.");
                 return;
             }
-            ReportSummaryResponse xbpFiles = blobClient.getBlobReportsByDate(today);
-
-            if (xbpFiles == null || xbpFiles.getTotalReceived() == 0) {
+            if (blobClient.getBlobReportsByDate(today).getTotalReceived() == 0) {
                 actions.add("No files from XBP have come through for today.");
             }
         } catch (Exception e) {

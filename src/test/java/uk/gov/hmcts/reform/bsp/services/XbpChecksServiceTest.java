@@ -53,7 +53,7 @@ class XbpChecksServiceTest {
         xbpFiles.setTotalReceived(1);
         when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
-        service.runChecks();
+        service.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
@@ -72,7 +72,7 @@ class XbpChecksServiceTest {
         xbpFiles.setTotalReceived(0);
         when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
 
-        service.runChecks();
+        service.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
@@ -84,7 +84,7 @@ class XbpChecksServiceTest {
         when(blobClient.getBlobReportsByDate(anyString()))
             .thenThrow(new RuntimeException("xbp-fail"));
 
-        service.runChecks();
+        service.runDailyChecks();
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(slackHelper).sendLongMessage(captor.capture());
@@ -104,7 +104,7 @@ class XbpChecksServiceTest {
         when(bankHolidayClient.getBankHolidays()).thenReturn(holidays);
 
         // Act
-        service.runChecks();
+        service.runDailyChecks();
 
         // Assert
         verify(blobClient, never()).getBlobReportsByDate(anyString());
