@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.bsp.services;
 
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.bsp.config.feign.BankHolidayClient;
@@ -46,13 +47,12 @@ public class XbpChecksService {
 
     /**
      * Checks that XBP files have been processed today.
-     * @param actions list to record any failures
+     * @param actions Record of any failures
      */
     private void checkXbpFiles(List<String> actions) {
         try {
             String today = LocalDate.now().toString();
-            BankHolidays holidays = bankHolidayClient.getBankHolidays();
-            if (holidays.englandAndWales.events.stream().anyMatch(event -> event.date.equals(today))) {
+            if (isBankHoliday(today)) {
                 log.info("Today is a bank holiday, skipping XBP file check.");
                 return;
             }
@@ -61,15 +61,29 @@ public class XbpChecksService {
             if (xbpFiles == null || xbpFiles.getTotalReceived() == 0) {
                 actions.add("No files from XBP have come through for today.");
             }
+        } catch (FeignException e) {
+            log.error("Feign error while checking XBP files", e);
+            actions.add("Failed to check XBP files due to network error: " + e.getMessage());
         } catch (Exception e) {
             log.error("Error while checking XBP files", e);
             actions.add("Failed to check XBP files. Check App insights.");
         }
     }
 
+    private boolean isBankHoliday(String today) {
+        try {
+            BankHolidays holidays = bankHolidayClient.getBankHolidays();
+            return holidays.englandAndWales.events.stream()
+                .anyMatch(event -> today.equals(event.date));
+        } catch (Exception e) {
+            log.warn("Failed to check for bank holidays", e);
+            return false;
+        }
+    }
+
     /**
      * Sends a summary of XBP checks to Slack.
-     * @param actions list of action descriptions
+     * @param actions Action descriptions to include in the summary
      */
     private void sendSlackSummary(List<String> actions) {
         ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
@@ -80,8 +94,8 @@ public class XbpChecksService {
         if (actions.isEmpty()) {
             sb.append("> ✅ All clear! No XBP issues detected. :tada:");
         } else {
-            sb.append("> ❗ XBP issues found:\n");
-            actions.forEach(a -> sb.append("• ").append(a).append("\n"));
+            sb.append("> ❗ XBP issue found:\n");
+            actions.forEach(action -> sb.append("• ").append(action).append("\n"));
         }
         slackHelper.sendLongMessage(sb.toString());
     }

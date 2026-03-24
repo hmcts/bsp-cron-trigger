@@ -64,7 +64,6 @@ public class BulkScanChecksService {
         sendSlackSummary(actions);
     }
 
-
     /**
      * Deletes stale blobs older than STALE_HOURS.
      * @param actions list to record any failures

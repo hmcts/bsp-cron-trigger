@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.bsp.config.feign;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.hmcts.reform.bsp.models.ReportSummaryResponse;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
@@ -20,8 +19,9 @@ public interface BlobRouterServiceClient {
         int staleTime
     );
 
-    @GetMapping("/reports/count-summary?date={date}")
+    @GetMapping("/reports/count-summary")
     ReportSummaryResponse getBlobReportsByDate(
-        @PathVariable String date
+        @RequestParam(name = "date", required = true, defaultValue = "2026-03-01")
+        String date
     );
 }
