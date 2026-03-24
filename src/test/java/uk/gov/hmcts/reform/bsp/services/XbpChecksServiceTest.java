@@ -40,7 +40,6 @@ class XbpChecksServiceTest {
 
     @BeforeEach
     void setUp() {
-        // By default, today is not a bank holiday
         BankHolidays nonHoliday = new BankHolidays();
         nonHoliday.englandAndWales = new RegionBankHolidays();
         nonHoliday.englandAndWales.events = Collections.emptyList();
@@ -48,7 +47,7 @@ class XbpChecksServiceTest {
     }
 
     @Test
-    void runChecks_whenFilesFound_reportsSuccess() {
+    void runDailyChecks_whenFilesFound_reportsSuccess() {
         ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
         xbpFiles.setTotalReceived(1);
         when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
@@ -67,7 +66,7 @@ class XbpChecksServiceTest {
     }
 
     @Test
-    void runChecks_whenNoFilesFound_reportsXbpError() {
+    void runDailyChecks_whenNoFilesFound_reportsXbpError() {
         ReportSummaryResponse xbpFiles = new ReportSummaryResponse();
         xbpFiles.setTotalReceived(0);
         when(blobClient.getBlobReportsByDate(anyString())).thenReturn(xbpFiles);
@@ -80,7 +79,7 @@ class XbpChecksServiceTest {
     }
 
     @Test
-    void runChecks_whenCheckFails_reportsXbpCheckError() {
+    void runDailyChecks_whenCheckFails_reportsXbpCheckError() {
         when(blobClient.getBlobReportsByDate(anyString()))
             .thenThrow(new RuntimeException("xbp-fail"));
 
@@ -92,9 +91,9 @@ class XbpChecksServiceTest {
     }
 
     @Test
-    void runChecks_shouldSkip_onBankHoliday() {
-        // Arrange
+    void runDailyChecks_shouldSkip_onBankHoliday() {
         String today = java.time.LocalDate.now().toString();
+        System.out.println("Today is: " + today);
         BankHolidays holidays = new BankHolidays();
         holidays.englandAndWales = new RegionBankHolidays();
         BankHolidayEvent event = new BankHolidayEvent();
@@ -103,10 +102,8 @@ class XbpChecksServiceTest {
 
         when(bankHolidayClient.getBankHolidays()).thenReturn(holidays);
 
-        // Act
         service.runDailyChecks();
 
-        // Assert
         verify(blobClient, never()).getBlobReportsByDate(anyString());
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);

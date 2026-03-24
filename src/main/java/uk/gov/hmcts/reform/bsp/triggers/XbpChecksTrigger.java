@@ -16,7 +16,7 @@ public class XbpChecksTrigger implements Trigger {
 
     @Override
     public void trigger() {
-        xbpChecksService.runChecks();
+        xbpChecksService.runDailyChecks();
     }
 
     @Override
