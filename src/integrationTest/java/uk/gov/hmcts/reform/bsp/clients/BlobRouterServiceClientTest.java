@@ -67,4 +67,13 @@ class BlobRouterServiceClientTest {
             assertThat(id).isNotNull();
         });
     }
+
+    @DisplayName("Should get blob reports by date and return successfully")
+    @Test
+    void getBlobReportsByDateTest() {
+        String testDate = "2024-01-15";
+        var resp = client.getBlobReportsByDate(testDate);
+        assertThat(resp).isNotNull();
+    }
+
 }
