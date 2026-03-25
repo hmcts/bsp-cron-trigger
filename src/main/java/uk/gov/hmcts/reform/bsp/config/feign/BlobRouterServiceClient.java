@@ -21,7 +21,7 @@ public interface BlobRouterServiceClient {
 
     @GetMapping("/reports/count-summary")
     ReportSummaryResponse getBlobReportsByDate(
-        @RequestParam(name = "date", required = true, defaultValue = "2026-03-01")
+        @RequestParam(name = "date")
         String date
     );
 }
