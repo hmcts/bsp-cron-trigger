@@ -1,20 +1,21 @@
 package uk.gov.hmcts.reform.bsp.services;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
+import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
+import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
-import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -37,54 +38,156 @@ public class BulkPrintChecksService {
     /**
      * Runs the daily check process for bulk print letters.
      * <ol>
-     *   <li>Fetch the list of stale letters (older than a set threshold).</li>
-     *   <li>For each letter:
-     *       <ul>
-     *         <li>If the letter is older than one week or still in "Uploaded" status, mark it as "Aborted".</li>
-     *         <li>Otherwise, mark it as "Created".</li>
-     *       </ul>
+     *   <li>Trigger the process-reports task on the send-letters-service, then:</li>
+     *     <ul>
+     *       <li>If no reports have been received, add an info message.</li>
+     *       <li>Otherwise, for each response:
+     *         <ul>
+     *           <li>If the report is marked as "processing failed", add an alert containing the message.</li>
+     *           <li>Otherwise, add an info message detailing the report code and the number of posted letters.</li>
+     *         </ul>
+     *       </li>
+     *     </ul>
      *   </li>
-     *   <li>Collect any failures to notify for investigation.</li>
-     *   <li>Send a Slack message summarising today's actions.</li>
-     * </ol>
+     *   <li>Trigger the check-posted task on the send-letter-service, then:
+     *     <ul>
+     *       <li>If the response show that 0 files have been move to NO_REPORT_ABORTED, add an info message.</li>
+     *       <li>Otherwise, add an alert message.</li>
+     *     </ul>
+     *   </li>
+     *   <li>Fetch the list of stale letters from the send-letter-service, then for each stale letter:
+     *     <ul>
+     *       <li>Generate an alert containing the id of the letter, indicating a need to investigate.</li>
+     *     </ul>
+     *   </li>
+     *   <li>Collect all messages and alerts into a single, formatted message with a summary heading, then post
+     *       that message to the configured Slack channel.</li>
+     * </ol>>
      */
     public void runDailyChecks() {
-        StaleLetterResponse resp = fetchStaleLettersOrAbort();
 
-        List<String> actions = new ArrayList<>();
-        Instant oneWeekAgo = Instant.now().minusSeconds(7 * 24 * 60 * 60L);
-        for (StaleLetter letter : resp.getStaleLetters()) {
-            Instant created = letter.getCreatedAt().toInstant(ZoneOffset.UTC);
-            try {
-                if (created.isBefore(oneWeekAgo) || "Uploaded".equals(letter.getStatus())) {
-                    letterClient.markAborted(
-                        letter.getId().toString(),
-                        "Bearer " + authProps.getBearerToken()
-                    );
+        final List<String> messages = new ArrayList<>();
+        boolean success = true;
+
+        success &= runProcessReportsTask(messages);
+        success &= runCheckPostedTask(messages);
+        success &= runStaleLettersCheck(messages);
+
+        sendSlackMessage(messages, success);
+    }
+
+    private boolean runProcessReportsTask(final List<String> messages) {
+        boolean result = true;
+        List<PostedReportTaskResponse> mptResp = runProcessReportsTaskOrAbort();
+        if (mptResp == null || mptResp.isEmpty()) {
+            messages.add(" ℹ️ *Process Reports*: Complete; no reports processed.");
+        } else {
+            for (PostedReportTaskResponse report : mptResp) {
+                String scope =  report.isInternational() ? "international" : "domestic";
+                if (report.isProcessingFailed()) {
+                    result = false;
+                    messages.add(String.format(
+                        " ❗ *Process Reports*: %s (%s) ERROR: %s",
+                        report.getReportCode(),
+                        scope,
+                        report.getErrorMessage()
+                    ));
                 } else {
-                    letterClient.markCreated(
-                        letter.getId().toString(),
-                        "Bearer " + authProps.getBearerToken()
-                    );
+                    messages.add(String.format(
+                        " ✅ *Process Reports*: %s (%s) complete; %d letters marked as posted.",
+                        report.getReportCode(),
+                        scope,
+                        report.getMarkedPostedCount()
+                    ));
                 }
-            } catch (Exception e) {
-                log.warn("Exception occurred while marking aborted or created {}", letter.getId(), e);
-                actions.add("Investigate Letter " + letter.getId());
             }
         }
+        return result;
+    }
 
+    private boolean runCheckPostedTask(final List<String> messages) {
+        boolean result = true;
+        CheckPostedTaskResponse ctResp = runCheckPostedTaskOrAbort();
+        if (ctResp.getMarkedNoReportAbortedCount() <= 0) {
+            messages.add(" ✅ *Check Posted*: Complete; no letters were affected.");
+        } else {
+            result = false;
+            messages.add(String.format(
+                "❗ *Check Posted*: Complete; %d letters were marked as NO_REPORT_ABORTED.",
+                ctResp.getMarkedNoReportAbortedCount()
+            ));
+        }
+        return result;
+    }
+
+    private boolean runStaleLettersCheck(final List<String> messages) {
+        boolean result = true;
+        StaleLetterResponse slResp = fetchStaleLettersOrAbort();
+        if (slResp.getCount() > 0) {
+            result = false;
+            // alert on slack because a report was received and these docs weren't referenced
+            for (StaleLetter letter : slResp.getStaleLetters()) {
+                messages.add(String.format(" ❗ *Check Stale*: Investigate stale letter: %s ", letter.getId()));
+            }
+        }
+        return result;
+    }
+
+    private void sendSlackMessage(final List<String> messages, final boolean success) {
         ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
         String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
         StringBuilder sb = new StringBuilder(
-            String.format("*:printer: Bulk Print Daily Check (%s)*\n", timestamp)
+            String.format("*:printer: Bulk Print Daily Check (%s)*%n%n", timestamp)
         );
-        if (actions.isEmpty()) {
-            sb.append("> ✅ All clear! No print issues detected. :tada:");
+
+        // if there are stale letters, or some letters have been set to NO_REPORT_ABORTED,
+        // indicate this in the header of the slack message
+        if (success) {
+            sb.append("> :tada: *No print issues were detected* :tada:\n");
         } else {
-            sb.append("> ❗ Print issues found:\n");
-            actions.forEach(a -> sb.append("• ").append(a).append("\n"));
+            sb.append("> :rotatinglight2: *Print issues were detected* :rotatinglight2:\n");
         }
+
+        messages.forEach(a -> sb.append("• ").append(a).append("\n"));
         slackHelper.sendLongMessage(sb.toString());
+        log.info(sb.toString());
+    }
+
+    /**
+     * Runs the Process Reports Task on the send letter service.
+     *
+     * @return response containing result of the task
+     * @throws IllegalStateException if an error occurs during the task
+     */
+    private List<PostedReportTaskResponse> runProcessReportsTaskOrAbort() {
+        try {
+            return letterClient.runProcessReports("Bearer " + authProps.getBearerToken());
+        } catch (Exception e) {
+            log.error("Error running process reports task", e);
+            slackHelper.sendLongMessage(
+                String.format("*:rotating_light: Could not run process reports task: %s *%n> ",e.getMessage())
+            );
+            throw new IllegalStateException("Aborting bulk‐print checks", e);
+        }
+    }
+
+    /**
+     * Runs the Check Posted Task on the send letter service.
+     *
+     * @return response containing result of the check
+     * @throws IllegalStateException if an error occurs during the task
+     */
+    private CheckPostedTaskResponse runCheckPostedTaskOrAbort() {
+        try {
+            return letterClient.runCheckPosted("Bearer " + authProps.getBearerToken());
+        } catch (Exception e) {
+            log.error("Error running check posted task", e);
+            slackHelper.sendLongMessage(
+                String.format("*:rotating_light: Could not run check posted task: %s *%n> ",e.getMessage())
+            );
+            throw new IllegalStateException("Aborting bulk‐print checks", e);
+        }
     }
 
     /**
@@ -100,7 +203,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error fetching stale letters", e);
             slackHelper.sendLongMessage(
-                "*:rotating_light: Could not fetch stale letters! *\n> "
+                String.format("*:rotating_light: Could not fetch stale letters: %s *%n> ",e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }

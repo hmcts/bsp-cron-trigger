@@ -5,7 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+
+import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
+import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
+
+import java.util.List;
 
 @FeignClient(
     name = "sendLetterServiceClient",
@@ -23,4 +28,10 @@ public interface SendLetterServiceClient {
     @PutMapping("/letters/{letterId}/mark-created")
     void markCreated(@PathVariable("letterId") String letterId,
                      @RequestHeader("Authorization") String bearerToken);
+
+    @GetMapping("/tasks/process-reports")
+    List<PostedReportTaskResponse> runProcessReports(@RequestHeader("Authorization") String bearerToken);
+
+    @GetMapping("/tasks/check-posted")
+    CheckPostedTaskResponse runCheckPosted(@RequestHeader("Authorization") String bearerToken);
 }

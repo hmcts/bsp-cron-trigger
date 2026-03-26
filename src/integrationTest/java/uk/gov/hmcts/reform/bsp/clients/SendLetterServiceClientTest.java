@@ -5,13 +5,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackClient;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
+import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest(properties = {
     "app.trigger-type=BULK_PRINT_CHECKS",
@@ -21,6 +25,9 @@ class SendLetterServiceClientTest {
 
     @Autowired
     private SendLetterServiceClient client;
+
+    @Autowired
+    private AuthorisationProperties authProps;
 
     @MockitoBean
     private SlackClient slackClient;
@@ -51,5 +58,25 @@ class SendLetterServiceClientTest {
                 .withFailMessage("sentToPrintAt must be after or equal to createdAt")
                 .isAfterOrEqualTo(letter.getCreatedAt());
         });
+    }
+
+    @DisplayName("Should process reports and return valid responses")
+    @Test
+    void runProcessReportsTest() {
+        try {
+            String bearerToken = "Bearer " + authProps.getBearerToken();
+            client.runProcessReports(bearerToken);
+        } catch (Exception e) {
+            fail("Expected to be able to call the process reports endpoint: " + e.getMessage());
+        }
+    }
+
+    @DisplayName("Should check posted and return valid response")
+    @Test
+    void runCheckPostedTest() {
+        String bearerToken = "Bearer " + authProps.getBearerToken();
+        CheckPostedTaskResponse resp = client.runCheckPosted(bearerToken);
+        assertThat(resp).isNotNull();
+        assertThat(resp.getMarkedNoReportAbortedCount()).isGreaterThanOrEqualTo(0);
     }
 }

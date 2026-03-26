@@ -1,5 +1,4 @@
 #!groovy
-
 @Library("Infrastructure")
 
 def type = "java"
@@ -9,6 +8,7 @@ def channel = '#bsp-build-notices'
 
 withPipeline(type, product, component) {
   nonServiceApp()
+  env.INT_ENVS_ENABLED = true
 
   // Needed for integration tests
   env.SEND_LETTER_SERVICE_URL = "http://rpe-send-letter-service-aat.service.core-compute-aat.internal"
