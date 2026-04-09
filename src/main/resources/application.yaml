@@ -41,6 +41,7 @@ url:
   blob-router-service: ${BLOB_ROUTER_SERVICE_URL:http://localhost:8584}
   bulk-scan-processor: ${BULK_SCAN_PROCESSOR_URL:http://localhost:8581}
   bulk-scan-orchestrator: ${BULK_SCAN_ORCHESTRATOR_URL:http://localhost:8582}
+  bank-holidays: ${BANK_HOLIDAYS_URL:https://www.gov.uk}
 
 slack:
   token-daily-checks: ${SLACK_TOKEN_DAILY_CHECKS:atoken}

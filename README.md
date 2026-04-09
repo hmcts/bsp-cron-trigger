@@ -100,6 +100,7 @@ export SEND_LETTER_SERVICE_URL="http://rpe-send-letter-service-aat.service.core-
 export BLOB_ROUTER_SERVICE_URL="http://reform-scan-blob-router-aat.service.core-compute-aat.internal"
 export BULK_SCAN_PROCESSOR_URL="http://bulk-scan-processor-aat.service.core-compute-aat.internal"
 export BULK_SCAN_ORCHESTRATOR_URL="http://bulk-scan-orchestrator-aat.service.core-compute-aat.internal"
+export BANK_HOLIDAYS_URL="https://www.gov.uk"
 ACTIONS_API_KEY=<needed from key vault>
 ./gradlew build
 ```
