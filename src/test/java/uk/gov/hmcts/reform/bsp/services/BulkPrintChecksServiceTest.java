@@ -142,7 +142,7 @@ class BulkPrintChecksServiceTest {
         PostedReportTaskResponse prtrD = new PostedReportTaskResponse("NFDIV", now, true);
         prtrA.setMarkedPostedCount(100);
 
-        when(letterClient.runProcessReports(anyString())).thenReturn(
+        when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(
             List.of(prtrA, prtrB, prtrC, prtrD)
         );
 
@@ -166,7 +166,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_shouldSendMessageWithCheckPostedDetails() {
-        when(letterClient.runProcessReports(anyString())).thenReturn(Collections.emptyList());
+        when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenReturn(new CheckPostedTaskResponse(30));
         when(letterClient.getStaleLetters()).thenReturn(new StaleLetterResponse(0, Collections.emptyList()));
 
@@ -184,7 +184,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenProcessReportsCallFails() {
-        when(letterClient.runProcessReports(anyString())).thenThrow(new RuntimeException());
+        when(letterClient.fetchProcessedReports(anyString(), any())).thenThrow(new RuntimeException());
 
         assertThrows(IllegalStateException.class, () -> bulkPrintChecksService.runDailyChecks());
 
@@ -197,7 +197,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenCheckPostedCallFails() {
-        when(letterClient.runProcessReports(anyString())).thenReturn(Collections.emptyList());
+        when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenThrow(new RuntimeException());
 
         assertThrows(IllegalStateException.class, () -> bulkPrintChecksService.runDailyChecks());
@@ -211,7 +211,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenGetStaleLettersCallFails() {
-        when(letterClient.runProcessReports(anyString())).thenReturn(Collections.emptyList());
+        when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenReturn(new CheckPostedTaskResponse(30));
         when(letterClient.getStaleLetters()).thenThrow(new RuntimeException());
 

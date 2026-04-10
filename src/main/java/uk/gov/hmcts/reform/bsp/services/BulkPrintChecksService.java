@@ -8,6 +8,7 @@ import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -162,7 +163,8 @@ public class BulkPrintChecksService {
      */
     private List<PostedReportTaskResponse> runProcessReportsTaskOrAbort() {
         try {
-            return letterClient.runProcessReports("Bearer " + authProps.getBearerToken());
+            return letterClient.fetchProcessedReports("Bearer " + authProps.getBearerToken(),
+                                                      LocalDateTime.now().minusMinutes(30));
         } catch (Exception e) {
             log.error("Error running process reports task", e);
             slackHelper.sendLongMessage(
