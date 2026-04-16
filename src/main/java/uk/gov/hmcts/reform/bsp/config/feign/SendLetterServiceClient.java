@@ -5,8 +5,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
+import uk.gov.hmcts.reform.bsp.models.MissingReportsResponse;
 import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
@@ -34,4 +36,9 @@ public interface SendLetterServiceClient {
 
     @GetMapping("/tasks/check-posted")
     CheckPostedTaskResponse runCheckPosted(@RequestHeader("Authorization") String bearerToken);
+
+    @GetMapping("/reports/check-reports")
+    List<MissingReportsResponse> runCheckReports(
+        @RequestParam("startDate") String startDate,
+        @RequestParam("endDate") String endDate);
 }
