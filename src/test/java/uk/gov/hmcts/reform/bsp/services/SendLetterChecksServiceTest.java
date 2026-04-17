@@ -16,9 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -91,7 +89,8 @@ class SendLetterChecksServiceTest {
         verify(slackHelper).sendDailyCheckSummary(
             eq("Send Letter Service"),
             eq(":mag:"),
-            argThat((Optional<String> opt) -> opt.isPresent() && opt.get().contains("Failed to check for missing reports"))
+            argThat(
+                (Optional<String> opt) -> opt.isPresent() && opt.get().contains("Failed to check for missing reports"))
         );
     }
 
