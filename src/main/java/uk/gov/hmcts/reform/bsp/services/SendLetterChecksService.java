@@ -58,22 +58,16 @@ public class SendLetterChecksService {
             );
         } catch (FeignException.NotFound e) {
             String content = e.contentUTF8();
-            if (content != null && !content.isEmpty()) {
-                try {
-                    missingReports = objectMapper.readValue(
-                        content,
-                        new TypeReference<List<MissingReportsResponse>>() {
-                        }
-                    );
-                } catch (Exception ex) {
-                    log.error("Error while parsing missing reports response", ex);
-                    missingReports = Collections.emptyList();
-                }
-            } else {
+            try {
+                missingReports = objectMapper.readValue(
+                    content,
+                    new TypeReference<List<MissingReportsResponse>>() {
+                    }
+                );
+            } catch (Exception ex) {
                 missingReports = Collections.emptyList();
             }
         } catch (Exception e) {
-            log.error("Error while checking for missing reports", e);
             return Optional.of("Failed to check for missing reports. Check App insights.");
         }
 
