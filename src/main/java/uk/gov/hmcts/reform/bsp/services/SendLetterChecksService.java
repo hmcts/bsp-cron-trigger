@@ -10,9 +10,6 @@ import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.MissingReportsResponse;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +38,7 @@ public class SendLetterChecksService {
     public void runDailyChecks() {
         Optional<String> action = checkMissingReports();
 
-        sendSlackSummary(action);
+        slackHelper.sendDailyCheckSummary("Send Letter Service", ":mag:", action);
     }
 
     /**
@@ -79,22 +76,4 @@ public class SendLetterChecksService {
         return Optional.empty();
     }
 
-    /**
-     * Sends a summary of Send letter service checks to Slack.
-     * @param action Action description to include in the summary
-     */
-    private void sendSlackSummary(Optional<String> action) {
-        ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
-        String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-        StringBuilder sb = new StringBuilder(
-            String.format("*:mag: Send Letter Service Daily Check (%s)*\n", timestamp)
-        );
-        if (action.isEmpty()) {
-            sb.append("> ✅ All clear! No Send Letter Service issues detected. :tada:");
-        } else {
-            sb.append("> ❗ Send Letter Service issue found:\n");
-            sb.append("• ").append(action.get()).append("\n");
-        }
-        slackHelper.sendLongMessage(sb.toString());
-    }
 }

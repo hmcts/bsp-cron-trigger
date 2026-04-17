@@ -14,10 +14,14 @@ import uk.gov.hmcts.reform.bsp.models.MissingReportsResponse;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,14 +51,10 @@ class SendLetterChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-
-        String actual = captor.getValue();
-        assertAll(
-            "Send Letter Service no-issues summary",
-            () -> assertTrue(actual.contains("Send Letter Service Daily Check")),
-            () -> assertTrue(actual.contains("All clear! No Send Letter Service issues detected"))
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Send Letter Service"),
+            eq(":mag:"),
+            eq(Optional.empty())
         );
     }
 
@@ -67,9 +67,15 @@ class SendLetterChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        String actual = captor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Optional<String>> captor = ArgumentCaptor.forClass(Optional.class);
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Send Letter Service"),
+            eq(":mag:"),
+            captor.capture()
+        );
+
+        String actual = captor.getValue().get();
         assertTrue(actual.contains("Missing reports found:"));
         assertTrue(actual.contains("ServiceA"));
         assertTrue(actual.contains("isInternational=true"));
@@ -82,9 +88,11 @@ class SendLetterChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Failed to check for missing reports. Check App insights."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Send Letter Service"),
+            eq(":mag:"),
+            argThat((Optional<String> opt) -> opt.isPresent() && opt.get().contains("Failed to check for missing reports"))
+        );
     }
 
     @Test
@@ -97,9 +105,14 @@ class SendLetterChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        String actual = captor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Optional<String>> captor = ArgumentCaptor.forClass(Optional.class);
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Send Letter Service"),
+            eq(":mag:"),
+            captor.capture()
+        );
+        String actual = captor.getValue().get();
         assertTrue(
             actual.contains("Missing reports found:"),
             "Should contain 'Missing reports found:' but was: " + actual);
@@ -118,8 +131,10 @@ class SendLetterChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("All clear! No Send Letter Service issues detected"));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Send Letter Service"),
+            eq(":mag:"),
+            eq(Optional.empty())
+        );
     }
 }

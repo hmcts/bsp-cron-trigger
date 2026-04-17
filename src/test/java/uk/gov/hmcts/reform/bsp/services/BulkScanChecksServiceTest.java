@@ -26,6 +26,10 @@ import java.util.function.Consumer;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -68,14 +72,10 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-
-        String actual = captor.getValue();
-        assertAll(
-            "bulk-scan no-issues summary",
-            () -> assertTrue(actual.contains("Bulk Scan Daily Check")),
-            () -> assertTrue(actual.contains("All clear! No scan issues detected"))
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            eq(Collections.emptyList())
         );
     }
 
@@ -92,9 +92,11 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Failed to remove stale blobs. Check App insights."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            argThat((List<String> list) -> list.size() == 1 && list.get(0).contains("Failed to remove stale blobs"))
+        );
     }
 
     @Test
@@ -123,13 +125,11 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        String expected = "Reprocess failed for *" + info.getContainer() + "* - Envelope: `"
-            + id + "` File name: `" + info.getFileName() + "`";
-
-        assertTrue(captor.getValue().contains(expected));
-
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            argThat((List<String> list) -> list.size() == 1 && list.get(0).contains("Reprocess failed for *Kittens*"))
+        );
     }
 
     @Test
@@ -158,12 +158,13 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        String out = captor.getValue();
-
-        assertTrue(out.contains("Retry update payment " + updId + " ➞ update payment fail"));
-        assertTrue(out.contains("Retry new payment " + newId + " ➞ new payment fail"));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            argThat((List<String> list) -> list.size() == 2
+                && list.stream().anyMatch(s -> s.contains("Retry update payment"))
+                && list.stream().anyMatch(s -> s.contains("Retry new payment")))
+        );
     }
 
     @Test
@@ -181,9 +182,11 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(cap.capture());
-        assertTrue(cap.getValue().contains("Failed to retry payments."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            argThat((List<String> list) -> list.size() == 1 && list.get(0).contains("Failed to retry payments"))
+        );
     }
 
     @Test
@@ -201,11 +204,13 @@ class BulkScanChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(cap.capture());
-        String out = cap.getValue();
-        assertTrue(out.contains("Failed to fetch update payments"));
-        assertTrue(out.contains("Failed to fetch new payments"));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("Bulk Scan"),
+            eq(":mag:"),
+            argThat((List<String> list) -> list.size() == 2
+                && list.contains("Failed to fetch update payments")
+                && list.contains("Failed to fetch new payments"))
+        );
     }
 
     @Test
