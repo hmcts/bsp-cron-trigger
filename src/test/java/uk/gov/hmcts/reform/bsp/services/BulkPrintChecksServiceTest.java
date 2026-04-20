@@ -13,6 +13,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
+import uk.gov.hmcts.reform.bsp.config.BulkPrintProcessingProperties;
+import uk.gov.hmcts.reform.bsp.config.CronTimerProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
@@ -45,11 +47,15 @@ class BulkPrintChecksServiceTest {
     @Mock
     private SendLetterServiceClient letterClient;
 
+    @Mock
+    private CronTimerProperties cronTimerProperties;
+
     @InjectMocks
     private BulkPrintChecksService bulkPrintChecksService;
 
     @Test
     void runDailyChecks_shouldSendMessageWithExpectedStaleLetterToCheck() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.getStaleLetters()).thenReturn(
             new StaleLetterResponse(
                 1, List.of(new StaleLetter(
@@ -83,6 +89,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_shouldSendMessageWithNoStaleLettersToCheck() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.getStaleLetters()).thenReturn(
             new StaleLetterResponse(
                 0, Collections.emptyList()
@@ -103,6 +110,8 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_whenSlackClientThrows_shouldPropagateException() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.getStaleLetters()).thenReturn(
             new StaleLetterResponse(
                 1, List.of(new StaleLetter(
@@ -127,10 +136,12 @@ class BulkPrintChecksServiceTest {
     void runDailyChecks_withNullSlackClient_shouldThrowNullPointerException() {
         BulkScanChecksService serviceWithNull = new BulkScanChecksService(null, null, null, null, null);
         assertThrows(NullPointerException.class, serviceWithNull::runDailyChecks);
+
     }
 
     @Test
     void runDailyChecks_shouldSendMessageWithProcessReportsDetails() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         LocalDate now = LocalDate.now();
         PostedReportTaskResponse prtrA = new PostedReportTaskResponse("SSCS-IB", now, false);
         prtrA.setMarkedPostedCount(100);
@@ -141,7 +152,6 @@ class BulkPrintChecksServiceTest {
         prtrA.setMarkedPostedCount(100);
         PostedReportTaskResponse prtrD = new PostedReportTaskResponse("NFDIV", now, true);
         prtrA.setMarkedPostedCount(100);
-
         when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(
             List.of(prtrA, prtrB, prtrC, prtrD)
         );
@@ -166,6 +176,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_shouldSendMessageWithCheckPostedDetails() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenReturn(new CheckPostedTaskResponse(30));
         when(letterClient.getStaleLetters()).thenReturn(new StaleLetterResponse(0, Collections.emptyList()));
@@ -184,6 +195,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenProcessReportsCallFails() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.fetchProcessedReports(anyString(), any())).thenThrow(new RuntimeException());
 
         assertThrows(IllegalStateException.class, () -> bulkPrintChecksService.runDailyChecks());
@@ -192,11 +204,12 @@ class BulkPrintChecksServiceTest {
         verify(slackHelper, times(1)).sendLongMessage(captor.capture());
 
         String actual = captor.getValue();
-        assertThat(actual).contains("Could not run process reports task");
+        assertThat(actual).contains("Could not fetch processed reports");
     }
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenCheckPostedCallFails() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenThrow(new RuntimeException());
 
@@ -211,6 +224,7 @@ class BulkPrintChecksServiceTest {
 
     @Test
     void runDailyChecks_abortsAndDoesntSendMessageWhenGetStaleLettersCallFails() {
+        when(cronTimerProperties.getBulkPrintProcessing()).thenReturn(new BulkPrintProcessingProperties());
         when(letterClient.fetchProcessedReports(anyString(), any())).thenReturn(Collections.emptyList());
         when(letterClient.runCheckPosted(any(String.class))).thenReturn(new CheckPostedTaskResponse(30));
         when(letterClient.getStaleLetters()).thenThrow(new RuntimeException());
