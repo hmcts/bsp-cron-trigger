@@ -19,7 +19,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest(properties = {
     "app.trigger-type=BULK_PRINT_CHECKS",
-    "app.enabled=true"}
+    "app.enabled=true",
+    "app.bulk-print-processing.processed-reports-retrieval-window=45m"}
 )
 class SendLetterServiceClientTest {
 
