@@ -8,26 +8,18 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class BulkPrintProcessingService {
 
     private final AuthorisationProperties authProps;
     private final SendLetterServiceClient letterClient;
     private final SlackMessageHelper slackHelper;
-
-    public BulkPrintProcessingService(
-        AuthorisationProperties authProps,
-        SendLetterServiceClient letterClient,
-        SlackMessageHelper slackHelper
-    ) {
-        this.authProps = authProps;
-        this.letterClient = letterClient;
-        this.slackHelper = slackHelper;
-    }
 
     public void startProcessingTasks() {
 
