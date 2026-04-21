@@ -115,8 +115,8 @@ class SendLetterChecksServiceTest {
         );
         String actual = captor.getValue().get();
         assertTrue(
-            actual.contains("Missing reports found:"),
-            "Should contain 'Missing reports found:' but was: " + actual);
+            actual.contains("Missing reports found"),
+            "Should contain 'Missing reports found' but was: " + actual);
         assertTrue(actual.contains("ServiceA"), "Should contain 'ServiceA' but was: " + actual);
         assertTrue(
             actual.contains("International"),
