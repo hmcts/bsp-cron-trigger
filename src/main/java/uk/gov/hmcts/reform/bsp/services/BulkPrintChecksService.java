@@ -73,10 +73,10 @@ public class BulkPrintChecksService {
 
     private boolean fetchProcessedReports(final List<String> messages) {
         boolean result = true;
-        LocalDateTime since = LocalDateTime.now().minus(
+        LocalDateTime after = LocalDateTime.now().minus(
             cronTimerProperties.getBulkPrintProcessing().getProcessedReportsRetrievalWindow()
         );
-        List<PostedReportTaskResponse> mptResp = fetchProcessedReportsOrAbort(since);
+        List<PostedReportTaskResponse> mptResp = fetchProcessedReportsOrAbort(after);
         if (mptResp == null || mptResp.isEmpty()) {
             messages.add(" ℹ️ *Fetch Processed Reports*: Complete; no reports processed");
         } else {
