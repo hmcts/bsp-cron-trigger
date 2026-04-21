@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.MissingReportsResponse;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +60,7 @@ class SendLetterChecksServiceTest {
     @Test
     void runDailyChecks_whenMissingReportsFound_reportsSendLetterError() {
         List<MissingReportsResponse> missingReports = List.of(
-            new MissingReportsResponse("ServiceA", true)
+            new MissingReportsResponse("ServiceA", true, LocalDate.now())
         );
         when(sendLetterServiceClient.runCheckReports(anyString(), anyString())).thenReturn(missingReports);
 
@@ -96,7 +97,8 @@ class SendLetterChecksServiceTest {
 
     @Test
     void runDailyChecks_when404WithBody_reportsMissingReports() {
-        String body = "[{\"serviceName\":\"ServiceA\",\"isInternational\":true}]";
+        String body =
+            "[{\"service_name\":\"ServiceA\",\"is_international\":true,\"report_date\":\"" + LocalDate.now() + "\"}]";
         FeignException.NotFound notFound = mock(FeignException.NotFound.class);
         when(notFound.contentUTF8()).thenReturn(body);
 

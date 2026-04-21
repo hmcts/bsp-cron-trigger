@@ -5,13 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 public class MissingReportsResponse {
-    @JsonProperty("serviceName")
+    @JsonProperty("service_name")
     final String serviceName;
 
-    @JsonProperty("isInternational")
+    @JsonProperty("is_international")
     final boolean isInternational;
+
+    @JsonProperty("report_date")
+    final LocalDate reportDate;
 }
