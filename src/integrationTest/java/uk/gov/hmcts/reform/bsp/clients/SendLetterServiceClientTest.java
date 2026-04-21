@@ -72,6 +72,17 @@ class SendLetterServiceClientTest {
         }
     }
 
+    @DisplayName("Should retrieve reports and return valid responses")
+    @Test
+    void fetchProcessedReportsTest() {
+        try {
+            String bearerToken = "Bearer " + authProps.getBearerToken();
+            client.fetchProcessedReports(bearerToken, LocalDateTime.now());
+        } catch (Exception e) {
+            fail("Expected to be able to call the process reports endpoint: " + e.getMessage());
+        }
+    }
+
     @DisplayName("Should check posted and return valid response")
     @Test
     void runCheckPostedTest() {
