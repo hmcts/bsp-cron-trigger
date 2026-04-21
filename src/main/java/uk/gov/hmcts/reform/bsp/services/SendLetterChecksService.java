@@ -89,20 +89,20 @@ public class SendLetterChecksService {
     }
 
     private String formatMissingReportsMessage(List<MissingReportsResponse> missingReports) {
-        StringBuilder sb = new StringBuilder("Missing reports found: [");
+        StringBuilder sb = new StringBuilder("Missing reports found: [ \n");
         for (int i = 0; i < missingReports.size(); i++) {
             MissingReportsResponse report = missingReports.get(i);
             sb.append(String.format(
-                "MissingReportsResponse(serviceName=%s, isInternational=%b, date=%s)",
+                "Missing Report: %s, %s, %s",
                 report.getServiceName(),
-                report.isInternational(),
+                report.isInternational() ? "International" : "Domestic",
                 report.getReportDate()
             ));
             if (i < missingReports.size() - 1) {
-                sb.append(", ");
+                sb.append(", \n");
             }
         }
-        sb.append("]. Check App insights for details.");
+        sb.append("\n]. \nCheck App insights for details.");
         return sb.toString();
     }
 
