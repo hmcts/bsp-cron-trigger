@@ -113,4 +113,45 @@ class SlackMessageHelperTest {
         assertTrue(sent.contains(String.valueOf(tooBig)), "Should report actual length");
         assertTrue(sent.contains(String.valueOf(SlackMessageHelper.MAX_TOTAL)), "Should report the limit");
     }
+
+    @Test
+    void sendDailyCheckSummary_withNoActions_reportsAllClear() {
+        helper.sendDailyCheckSummary("My Service", ":rocket:", java.util.Optional.empty());
+
+        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+        verify(slackClient).sendSlackMessage(cap.capture());
+
+        String sent = cap.getValue();
+        assertTrue(sent.contains(":rocket: My Service Daily Check"));
+        assertTrue(sent.contains("All clear! No My Service issues detected."));
+        assertTrue(sent.contains(":tada:"));
+    }
+
+    @Test
+    void sendDailyCheckSummary_withSingleAction_reportsIssue() {
+        helper.sendDailyCheckSummary("My Service", ":rocket:", java.util.Optional.of("Something went wrong"));
+
+        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+        verify(slackClient).sendSlackMessage(cap.capture());
+
+        String sent = cap.getValue();
+        assertTrue(sent.contains(":rocket: My Service Daily Check"));
+        assertTrue(sent.contains("My Service issue found:"));
+        assertTrue(sent.contains("• Something went wrong"));
+    }
+
+    @Test
+    void sendDailyCheckSummary_withMultipleActions_reportsIssues() {
+        List<String> actions = List.of("Error 1", "Error 2");
+        helper.sendDailyCheckSummary("My Service", ":rocket:", actions);
+
+        ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+        verify(slackClient).sendSlackMessage(cap.capture());
+
+        String sent = cap.getValue();
+        assertTrue(sent.contains(":rocket: My Service Daily Check"));
+        assertTrue(sent.contains("My Service issue found:"));
+        assertTrue(sent.contains("• Error 1"));
+        assertTrue(sent.contains("• Error 2"));
+    }
 }

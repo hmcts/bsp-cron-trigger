@@ -7,9 +7,6 @@ import uk.gov.hmcts.reform.bsp.config.feign.BlobRouterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -36,7 +33,7 @@ public class XbpChecksService {
     public void runDailyChecks() {
         Optional<String> action = checkXbpFiles();
 
-        sendSlackSummary(action);
+        slackHelper.sendDailyCheckSummary("XBP", ":mag:", action);
     }
 
     /**
@@ -71,22 +68,4 @@ public class XbpChecksService {
         }
     }
 
-    /**
-     * Sends a summary of XBP checks to Slack.
-     * @param action Action description to include in the summary
-     */
-    private void sendSlackSummary(Optional<String> action) {
-        ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
-        String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-        StringBuilder sb = new StringBuilder(
-            String.format("*:mag: XBP Daily Check (%s)*\n", timestamp)
-        );
-        if (action.isEmpty()) {
-            sb.append("> ✅ All clear! No XBP issues detected. :tada:");
-        } else {
-            sb.append("> ❗ XBP issue found:\n");
-            sb.append("• ").append(action.get()).append("\n");
-        }
-        slackHelper.sendLongMessage(sb.toString());
-    }
 }

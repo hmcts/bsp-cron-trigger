@@ -11,9 +11,6 @@ import uk.gov.hmcts.reform.bsp.models.EnvelopeInfo;
 import uk.gov.hmcts.reform.bsp.models.SearchResult;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +58,7 @@ public class BulkScanChecksService {
         handleEnvelopeProcessing(actions);
         handlePaymentRetries(actions);
 
-        sendSlackSummary(actions);
+        slackHelper.sendDailyCheckSummary("Bulk Scan", ":mag:", actions);
     }
 
     /**
@@ -212,22 +209,4 @@ public class BulkScanChecksService {
         }
     }
 
-    /**
-     * Sends a summary of today's actions (or lack thereof) to Slack.
-     * @param actions list of action descriptions
-     */
-    private void sendSlackSummary(List<String> actions) {
-        ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
-        String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-        StringBuilder sb = new StringBuilder(
-            String.format("*:mag: Bulk Scan Daily Check (%s)*\n", timestamp)
-        );
-        if (actions.isEmpty()) {
-            sb.append("> ✅ All clear! No scan issues detected. :tada:");
-        } else {
-            sb.append("> ❗ Scan issues found:\n");
-            actions.forEach(a -> sb.append("• ").append(a).append("\n"));
-        }
-        slackHelper.sendLongMessage(sb.toString());
-    }
 }

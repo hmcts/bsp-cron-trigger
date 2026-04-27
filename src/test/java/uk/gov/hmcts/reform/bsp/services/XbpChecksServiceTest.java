@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.bsp.services;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,10 +15,11 @@ import uk.gov.hmcts.reform.bsp.models.RegionBankHolidays;
 import uk.gov.hmcts.reform.bsp.models.ReportSummaryResponse;
 
 import java.util.Collections;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -54,14 +54,10 @@ class XbpChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-
-        String actual = captor.getValue();
-        assertAll(
-            "xbp no-issues summary",
-            () -> assertTrue(actual.contains("XBP Daily Check")),
-            () -> assertTrue(actual.contains("All clear! No XBP issues detected"))
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("XBP"),
+            eq(":mag:"),
+            eq(Optional.empty())
         );
     }
 
@@ -73,9 +69,11 @@ class XbpChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("No files from XBP have come through for today."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("XBP"),
+            eq(":mag:"),
+            argThat((Optional<String> opt) -> opt.isPresent() && opt.get().contains("No files from XBP"))
+        );
     }
 
     @Test
@@ -85,15 +83,16 @@ class XbpChecksServiceTest {
 
         service.runDailyChecks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("Failed to check XBP files. Check App insights."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("XBP"),
+            eq(":mag:"),
+            argThat((Optional<String> opt) -> opt.isPresent() && opt.get().contains("Failed to check XBP files"))
+        );
     }
 
     @Test
     void runDailyChecks_shouldSkip_onBankHoliday() {
         String today = java.time.LocalDate.now().toString();
-        System.out.println("Today is: " + today);
         BankHolidays holidays = new BankHolidays();
         holidays.englandAndWales = new RegionBankHolidays();
         BankHolidayEvent event = new BankHolidayEvent();
@@ -106,8 +105,10 @@ class XbpChecksServiceTest {
 
         verify(blobClient, never()).getBlobReportsByDate(anyString());
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(slackHelper).sendLongMessage(captor.capture());
-        assertTrue(captor.getValue().contains("All clear! No XBP issues detected."));
+        verify(slackHelper).sendDailyCheckSummary(
+            eq("XBP"),
+            eq(":mag:"),
+            eq(Optional.empty())
+        );
     }
 }
