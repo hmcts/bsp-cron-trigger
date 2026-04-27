@@ -187,7 +187,7 @@ dependencyManagement {
       entry 'log4j-to-slf4j'
     }
     // Solves CVE-2020-29582
-    dependencySet(group: 'org.jetbrains.kotlin', version: '2.3.20') {
+    dependencySet(group: 'org.jetbrains.kotlin', version: '2.3.21') {
       entry 'kotlin-stdlib'
       entry 'kotlin-stdlib-common'
       entry 'kotlin-stdlib-jdk7'
