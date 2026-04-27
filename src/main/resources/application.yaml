@@ -32,6 +32,8 @@ spring:
 app:
   trigger-type: ${TRIGGER_TYPE}
   enabled: ${TRIGGER_ENABLED}
+  bulk-print-processing:
+    processed-reports-retrieval-window: ${PROCESSED_REPORTS_RETRIEVAL_WINDOW:45m}
 
 authorisation:
   bearer-token: ${ACTIONS_API_KEY:moshkupo}

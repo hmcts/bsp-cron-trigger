@@ -3,7 +3,9 @@ package uk.gov.hmcts.reform.bsp.models;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.bsp.triggers.BulkPrintChecksTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BulkPrintProcessingTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.BulkScanChecksTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.XbpChecksTrigger;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -21,7 +23,7 @@ class ScheduleTypesTest {
             .collect(Collectors.toSet());
 
         assertThat(names)
-            .containsExactlyInAnyOrder("BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS", "XBP_CHECKS");
+            .containsExactlyInAnyOrder("BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS", "XBP_CHECKS", "BULK_PRINT_PROCESSING");
     }
 
     @Test
@@ -32,5 +34,11 @@ class ScheduleTypesTest {
 
         assertThat(ScheduleTypes.BULK_PRINT_CHECKS.getTriggerClass())
             .isEqualTo(BulkPrintChecksTrigger.class);
+
+        assertThat(ScheduleTypes.BULK_PRINT_PROCESSING.getTriggerClass())
+            .isEqualTo(BulkPrintProcessingTrigger.class);
+
+        assertThat(ScheduleTypes.XBP_CHECKS.getTriggerClass())
+            .isEqualTo(XbpChecksTrigger.class);
     }
 }
