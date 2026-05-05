@@ -16,7 +16,7 @@ public enum ScheduleTypes {
     BULK_SCAN_CHECKS(BulkScanChecksTrigger.class),
     BULK_PRINT_CHECKS(BulkPrintChecksTrigger.class),
     XBP_CHECKS(XbpChecksTrigger.class),
-    SEND_LETTER_CHECKS(SendLetterChecksTrigger.class);
+    SEND_LETTER_CHECKS(SendLetterChecksTrigger.class),
     BULK_PRINT_PROCESSING(BulkPrintProcessingTrigger.class);
 
     private final Class<? extends Trigger> triggerClass;
