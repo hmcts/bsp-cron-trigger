@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.bsp.models;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.bsp.triggers.BulkPrintChecksTrigger;
+import uk.gov.hmcts.reform.bsp.triggers.BulkPrintProcessingTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.BulkScanChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.SendLetterChecksTrigger;
 import uk.gov.hmcts.reform.bsp.triggers.XbpChecksTrigger;
@@ -23,8 +24,7 @@ class ScheduleTypesTest {
             .collect(Collectors.toSet());
 
         assertThat(names)
-            .containsExactlyInAnyOrder(
-                "BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS", "XBP_CHECKS", "SEND_LETTER_CHECKS");
+            .containsExactlyInAnyOrder("BULK_SCAN_CHECKS", "BULK_PRINT_CHECKS", "XBP_CHECKS", "BULK_PRINT_PROCESSING", "SEND_LETTER_CHECKS");
     }
 
     @Test
@@ -36,10 +36,13 @@ class ScheduleTypesTest {
         assertThat(ScheduleTypes.BULK_PRINT_CHECKS.getTriggerClass())
             .isEqualTo(BulkPrintChecksTrigger.class);
 
-        assertThat(ScheduleTypes.XBP_CHECKS.getTriggerClass())
-            .isEqualTo(XbpChecksTrigger.class);
-
         assertThat(ScheduleTypes.SEND_LETTER_CHECKS.getTriggerClass())
             .isEqualTo(SendLetterChecksTrigger.class);
+
+        assertThat(ScheduleTypes.BULK_PRINT_PROCESSING.getTriggerClass())
+            .isEqualTo(BulkPrintProcessingTrigger.class);
+
+        assertThat(ScheduleTypes.XBP_CHECKS.getTriggerClass())
+            .isEqualTo(XbpChecksTrigger.class);
     }
 }

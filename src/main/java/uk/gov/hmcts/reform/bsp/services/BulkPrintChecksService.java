@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.bsp.services;
 
 import uk.gov.hmcts.reform.bsp.config.AuthorisationProperties;
+import uk.gov.hmcts.reform.bsp.config.CronTimerProperties;
 import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackMessageHelper;
 import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
@@ -8,39 +9,33 @@ import uk.gov.hmcts.reform.bsp.models.PostedReportTaskResponse;
 import uk.gov.hmcts.reform.bsp.models.StaleLetter;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class BulkPrintChecksService {
 
     private final AuthorisationProperties authProps;
     private final SendLetterServiceClient letterClient;
     private final SlackMessageHelper slackHelper;
-
-    public BulkPrintChecksService(
-        AuthorisationProperties authProps,
-        SendLetterServiceClient letterClient,
-        SlackMessageHelper slackHelper
-    ) {
-        this.authProps = authProps;
-        this.letterClient = letterClient;
-        this.slackHelper = slackHelper;
-    }
+    private final CronTimerProperties cronTimerProperties;
 
     /**
      * Runs the daily check process for bulk print letters.
      * <ol>
-     *   <li>Trigger the process-reports task on the send-letters-service, then:</li>
+     *   <li>Retrieves the reports processed within the retrieval window:</li>
      *     <ul>
-     *       <li>If no reports have been received, add an info message.</li>
+     *       <li>If no reports have been processed, add an info message.</li>
      *       <li>Otherwise, for each response:
      *         <ul>
      *           <li>If the report is marked as "processing failed", add an alert containing the message.</li>
@@ -69,32 +64,35 @@ public class BulkPrintChecksService {
         final List<String> messages = new ArrayList<>();
         boolean success = true;
 
-        success &= runProcessReportsTask(messages);
+        success &= fetchProcessedReports(messages);
         success &= runCheckPostedTask(messages);
         success &= runStaleLettersCheck(messages);
 
         sendSlackMessage(messages, success);
     }
 
-    private boolean runProcessReportsTask(final List<String> messages) {
+    private boolean fetchProcessedReports(final List<String> messages) {
         boolean result = true;
-        List<PostedReportTaskResponse> mptResp = runProcessReportsTaskOrAbort();
+        LocalDateTime after = LocalDateTime.now().minus(
+            cronTimerProperties.getBulkPrintProcessing().getProcessedReportsRetrievalWindow()
+        );
+        List<PostedReportTaskResponse> mptResp = fetchProcessedReportsOrAbort(after);
         if (mptResp == null || mptResp.isEmpty()) {
-            messages.add(" ℹ️ *Process Reports*: Complete; no reports processed.");
+            messages.add(" ℹ️ *Fetch Processed Reports*: Complete; no reports processed");
         } else {
             for (PostedReportTaskResponse report : mptResp) {
-                String scope =  report.isInternational() ? "international" : "domestic";
+                String scope = report.isInternational() ? "international" : "domestic";
                 if (report.isProcessingFailed()) {
                     result = false;
                     messages.add(String.format(
-                        " ❗ *Process Reports*: %s (%s) ERROR: %s",
+                        " ❗ *Fetch Processed Reports*: %s (%s) ERROR: %s",
                         report.getReportCode(),
                         scope,
                         report.getErrorMessage()
                     ));
                 } else {
                     messages.add(String.format(
-                        " ✅ *Process Reports*: %s (%s) complete; %d letters marked as posted.",
+                        " ✅ *Fetch Processed Reports*: %s (%s) complete; %d letters marked as posted.",
                         report.getReportCode(),
                         scope,
                         report.getMarkedPostedCount()
@@ -155,18 +153,18 @@ public class BulkPrintChecksService {
     }
 
     /**
-     * Runs the Process Reports Task on the send letter service.
+     * Retrieves the reports that have been processed within the configured time window.
      *
      * @return response containing result of the task
      * @throws IllegalStateException if an error occurs during the task
      */
-    private List<PostedReportTaskResponse> runProcessReportsTaskOrAbort() {
+    private List<PostedReportTaskResponse> fetchProcessedReportsOrAbort(LocalDateTime since) {
         try {
-            return letterClient.runProcessReports("Bearer " + authProps.getBearerToken());
+            return letterClient.fetchProcessedReports("Bearer " + authProps.getBearerToken(), since);
         } catch (Exception e) {
-            log.error("Error running process reports task", e);
+            log.error("Error fetching processed reports", e);
             slackHelper.sendLongMessage(
-                String.format("*:rotating_light: Could not run process reports task: %s *%n> ",e.getMessage())
+                String.format("*:rotating_light: Could not fetch processed reports: %s *%n> ", e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }
@@ -184,7 +182,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error running check posted task", e);
             slackHelper.sendLongMessage(
-                String.format("*:rotating_light: Could not run check posted task: %s *%n> ",e.getMessage())
+                String.format("*:rotating_light: Could not run check posted task: %s *%n> ", e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }
@@ -203,7 +201,7 @@ public class BulkPrintChecksService {
         } catch (Exception e) {
             log.error("Error fetching stale letters", e);
             slackHelper.sendLongMessage(
-                String.format("*:rotating_light: Could not fetch stale letters: %s *%n> ",e.getMessage())
+                String.format("*:rotating_light: Could not fetch stale letters: %s *%n> ", e.getMessage())
             );
             throw new IllegalStateException("Aborting bulk‐print checks", e);
         }

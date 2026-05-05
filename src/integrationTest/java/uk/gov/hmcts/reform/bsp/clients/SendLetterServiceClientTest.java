@@ -19,7 +19,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest(properties = {
     "app.trigger-type=BULK_PRINT_CHECKS",
-    "app.enabled=true"}
+    "app.enabled=true",
+    "app.bulk-print-processing.processed-reports-retrieval-window=45m"}
 )
 class SendLetterServiceClientTest {
 
@@ -66,6 +67,17 @@ class SendLetterServiceClientTest {
         try {
             String bearerToken = "Bearer " + authProps.getBearerToken();
             client.runProcessReports(bearerToken);
+        } catch (Exception e) {
+            fail("Expected to be able to call the process reports endpoint: " + e.getMessage());
+        }
+    }
+
+    @DisplayName("Should retrieve reports and return valid responses")
+    @Test
+    void fetchProcessedReportsTest() {
+        try {
+            String bearerToken = "Bearer " + authProps.getBearerToken();
+            client.fetchProcessedReports(bearerToken, LocalDateTime.now());
         } catch (Exception e) {
             fail("Expected to be able to call the process reports endpoint: " + e.getMessage());
         }
