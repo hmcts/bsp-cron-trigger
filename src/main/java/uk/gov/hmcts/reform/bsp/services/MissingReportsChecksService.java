@@ -34,7 +34,7 @@ public class MissingReportsChecksService {
     }
 
     /**
-     * Entry point to run send letter service checks.
+     * Entry point to run missing reports checks.
      */
     public void runDailyChecks() {
         Optional<String> action = checkMissingReports();

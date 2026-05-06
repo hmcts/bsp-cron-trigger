@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class SendLetterChecksServiceTest {
+class MissingReportsChecksServiceTest {
 
     @Mock
     private SendLetterServiceClient sendLetterServiceClient;
@@ -51,7 +51,7 @@ class SendLetterChecksServiceTest {
         service.runDailyChecks();
 
         verify(slackHelper).sendDailyCheckSummary(
-            eq("Send Letter Service"),
+            eq("Missing Reports"),
             eq(":mag:"),
             eq(Optional.empty())
         );
@@ -69,7 +69,7 @@ class SendLetterChecksServiceTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Optional<String>> captor = ArgumentCaptor.forClass(Optional.class);
         verify(slackHelper).sendDailyCheckSummary(
-            eq("Send Letter Service"),
+            eq("Missing Reports"),
             eq(":mag:"),
             captor.capture()
         );
@@ -81,14 +81,14 @@ class SendLetterChecksServiceTest {
     }
 
     @Test
-    void runDailyChecks_whenCheckFails_reportsSendLetterCheckError() {
+    void runDailyChecks_whenCheckFails_reportsMissingReportsCheckError() {
         when(sendLetterServiceClient.runCheckReports(anyString(), anyString()))
-            .thenThrow(new RuntimeException("send-letter-fail"));
+            .thenThrow(new RuntimeException("missing-reports-fail"));
 
         service.runDailyChecks();
 
         verify(slackHelper).sendDailyCheckSummary(
-            eq("Send Letter Service"),
+            eq("Missing Reports"),
             eq(":mag:"),
             argThat(
                 (Optional<String> opt) -> opt.isPresent() && opt.get().contains("Failed to check for missing reports"))
@@ -109,7 +109,7 @@ class SendLetterChecksServiceTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Optional<String>> captor = ArgumentCaptor.forClass(Optional.class);
         verify(slackHelper).sendDailyCheckSummary(
-            eq("Send Letter Service"),
+            eq("Missing Reports"),
             eq(":mag:"),
             captor.capture()
         );
@@ -133,7 +133,7 @@ class SendLetterChecksServiceTest {
         service.runDailyChecks();
 
         verify(slackHelper).sendDailyCheckSummary(
-            eq("Send Letter Service"),
+            eq("Missing Reports"),
             eq(":mag:"),
             eq(Optional.empty())
         );
