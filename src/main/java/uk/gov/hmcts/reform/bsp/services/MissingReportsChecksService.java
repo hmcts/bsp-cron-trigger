@@ -17,13 +17,13 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class SendLetterChecksService {
+public class MissingReportsChecksService {
 
     private final SendLetterServiceClient sendLetterServiceClient;
     private final SlackMessageHelper slackHelper;
     private final ObjectMapper objectMapper;
 
-    public SendLetterChecksService(
+    public MissingReportsChecksService(
         SendLetterServiceClient sendLetterServiceClient,
         SlackMessageHelper slackHelper,
         ObjectMapper objectMapper
@@ -39,7 +39,7 @@ public class SendLetterChecksService {
     public void runDailyChecks() {
         Optional<String> action = checkMissingReports();
 
-        slackHelper.sendDailyCheckSummary("Send Letter Service", ":mag:", action);
+        slackHelper.sendDailyCheckSummary("Missing Reports", ":mag:", action);
     }
 
     /**

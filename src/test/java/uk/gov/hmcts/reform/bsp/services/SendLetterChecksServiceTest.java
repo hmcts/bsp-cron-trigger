@@ -34,13 +34,13 @@ class SendLetterChecksServiceTest {
     @Mock
     private SlackMessageHelper slackHelper;
 
-    private SendLetterChecksService service;
+    private MissingReportsChecksService service;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        service = new SendLetterChecksService(sendLetterServiceClient, slackHelper, objectMapper);
+        service = new MissingReportsChecksService(sendLetterServiceClient, slackHelper, objectMapper);
     }
 
     @Test
