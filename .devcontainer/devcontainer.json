@@ -1,0 +1,35 @@
+{
+  "name": "bsp-cron-trigger",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/bsp-cron-trigger",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "25"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [5678],
+  "portsAttributes": {
+    "5678": {
+      "label": "BSP Cron Trigger",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "bash -o pipefail -c './gradlew --version && curl -fsSL https://gh.io/copilot-install | sudo bash'",
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "customizations": {
+    "jetbrains": {
+      "backend": "IntelliJ"
+    }
+  }
+}

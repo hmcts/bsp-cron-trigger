@@ -17,7 +17,7 @@ application {
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(21)
+    languageVersion = JavaLanguageVersion.of(25)
   }
 }
 
@@ -67,8 +67,17 @@ tasks.withType(Test).configureEach {
 
   testLogging {
     exceptionFormat = 'full'
-    jvmArgs '-Djava.security.manager=allow'
   }
+}
+
+tasks.named('test', Test) {
+  // Keep the exit-test agent after JaCoCo so coverage sees the original bytecode.
+  jvmArgumentProviders.add({
+    def exitAgent = configurations.testRuntimeClasspath.files.find {
+      it.name.startsWith('junit5-system-exit-')
+    }
+    ["-javaagent:${exitAgent}"]
+  } as CommandLineArgumentProvider)
 }
 
 tasks.register('integration', Test) {
@@ -101,6 +110,10 @@ tasks.register('integration', Test) {
       println('Not logging into Azure; ACTIONS_API_KEY found')
     }
   }
+}
+
+jacoco {
+  toolVersion = '0.8.14'
 }
 
 jacocoTestReport {
@@ -155,7 +168,7 @@ dependencies {
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
-  testImplementation group: 'com.github.stefanbirkner', name: 'system-lambda', version: '1.2.1'
+  testImplementation group: 'com.ginsberg', name: 'junit5-system-exit', version: '2.0.3'
   testImplementation group: 'io.github.hakky54', name: 'logcaptor', version: '2.12.6'
   testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '6.0.1'
 }
