@@ -15,8 +15,8 @@ import uk.gov.hmcts.reform.bsp.triggers.Trigger;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.github.stefanbirkner.systemlambda.SystemLambda.catchSystemExit;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.ginsberg.junit.exit.assertions.SystemExitAssertion.assertThatCallsSystemExit;
+import static com.ginsberg.junit.exit.assertions.SystemExitAssertion.assertThatDoesNotCallSystemExit;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -38,25 +38,20 @@ class ScheduleRunnerTest {
     BulkPrintChecksTrigger bulkPrintChecksTrigger;
 
     private static final String MESSAGE_DO_NOT_MATCH_MESSAGE = "Messages do not match";
-    private static final String STATUS_DO_NOT_MATCH_MESSAGE = "Status codes do not match";
 
     @Test
-    void testRunnerWhereInvalidArgProvided() throws Exception {
+    void testRunnerWhereInvalidArgProvided() {
         try (LogCaptor logCaptor = LogCaptor.forClass(ScheduleRunner.class)) {
 
             when(cronTimerProperties.getTriggerType()).thenReturn("UNKNOWN_ENUM");
             when(cronTimerProperties.isEnabled()).thenReturn(true);
 
-            int statusCode = catchSystemExit(() -> {
-                scheduleRunner.run();
-            });
+            assertThatCallsSystemExit(() -> scheduleRunner.run()).withExitCode(1);
 
             assertTrue(
                 logCaptor.getErrorLogs().getFirst().contains("Invalid or no schedule type set. Exiting"),
                 MESSAGE_DO_NOT_MATCH_MESSAGE
             );
-
-            assertEquals(1, statusCode, STATUS_DO_NOT_MATCH_MESSAGE);
         }
     }
 
@@ -70,27 +65,23 @@ class ScheduleRunnerTest {
         when(cronTimerProperties.getTriggerType()).thenReturn("BULK_PRINT_CHECKS");
         when(cronTimerProperties.isEnabled()).thenReturn(true);
 
-        scheduleRunner.run();
+        assertThatDoesNotCallSystemExit(() -> scheduleRunner.run());
         verify(bulkPrintChecksTrigger, Mockito.times(1)).trigger();
     }
 
     @Test
-    void testRunnerNotEnabled() throws Exception {
+    void testRunnerNotEnabled() {
         try (LogCaptor logCaptor = LogCaptor.forClass(ScheduleRunner.class)) {
 
             when(cronTimerProperties.getTriggerType()).thenReturn("UNKNOWN_ENUM");
             when(cronTimerProperties.isEnabled()).thenReturn(false);
 
-            int statusCode = catchSystemExit(() -> {
-                scheduleRunner.run();
-            });
+            assertThatCallsSystemExit(() -> scheduleRunner.run()).withExitCode(1);
 
             assertTrue(
                 logCaptor.getWarnLogs().getFirst().contains("Trigger runner is disabled for UNKNOWN_ENUM."),
                 MESSAGE_DO_NOT_MATCH_MESSAGE
             );
-
-            assertEquals(1, statusCode, STATUS_DO_NOT_MATCH_MESSAGE);
         }
     }
 }

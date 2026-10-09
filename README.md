@@ -7,12 +7,13 @@ A lightweight Spring Boot application that runs scheduled Bulk Print and Bulk Sc
 2. [Features](#features)
 3. [Architecture](#architecture)
 4. [Prerequisites](#prerequisites)
-5. [Configuration](#configuration)
-6. [Building the Application](#building-the-application)
-7. [Running the Application](#running-the-application)
-8. [Testing](#testing)
-9. [Contributing](#contributing)
-10. [License](#license)
+5. [Development Container](#development-container-intellij)
+6. [Configuration](#configuration)
+7. [Building the Application](#building-the-application)
+8. [Running the Application](#running-the-application)
+9. [Testing](#testing)
+10. [Contributing](#contributing)
+11. [License](#license)
 
 ## Overview
 `bsp-cron-trigger` is designed to perform two daily checks:
@@ -43,9 +44,47 @@ Results of each run are chunked and delivered to Slack using the configured chan
 All triggers implement the `Trigger` interface and are selected at startup based on the `app.trigger-type` property.
 
 ## Prerequisites
-- Java 21+ (JDK)
+- Java 25 (JDK)
 - Docker & Docker Compose v2
 - Git
+
+## Development Container (IntelliJ)
+
+The repository includes an IntelliJ-first Dev Container with Java 25, GitHub CLI
+and GitHub Copilot CLI. Docker must be running and your local `.env` must exist
+before the container is created.
+
+To open the existing checkout in the container:
+
+1. Open the repository in IntelliJ IDEA.
+2. Open `.devcontainer/devcontainer.json`.
+3. Select **Create Dev Container and Mount Sources** from the gutter action.
+4. Select `bsp-cron-trigger`, then choose **Build Container and Continue**.
+5. Wait for the IntelliJ backend to start and connect through JetBrains Client.
+
+Use **Mount Sources** so changes stay in the existing local checkout. The
+container loads your `.env` directly. For services started on macOS by
+common-dev-env, use `host.docker.internal` instead of `localhost` in service URLs.
+
+Run local checks from IntelliJ's container terminal:
+
+```shell
+./gradlew clean build -x integration compileIntegrationTestJava jacocoTestReport
+```
+
+Live integration tests require reachable service URLs and `ACTIONS_API_KEY`;
+see the Testing section. Select the container's Java 25 SDK for the Project SDK,
+Gradle JVM and application JRE.
+
+Install the IntelliJ GitHub Copilot plugin through **Settings → Plugins** after
+connecting. Automatic plugin installation is omitted because it caused backend
+restart loops during connection. Copilot CLI is installed during container setup;
+run `copilot` and `/login` to sign in.
+
+The `devcontainer-home` volume preserves GitHub CLI and Copilot CLI settings.
+The host Git config is mounted read-only and Docker Desktop forwards the host
+SSH agent. Commit and tag signing are disabled inside the container, as in FACT.
+Feature versions are recorded in `.devcontainer/devcontainer-lock.json`.
 
 ## Configuration
 
@@ -118,6 +157,4 @@ Open a pull request
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file.
-
-
 
