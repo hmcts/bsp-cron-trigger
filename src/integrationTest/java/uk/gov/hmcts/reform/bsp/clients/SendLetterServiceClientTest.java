@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.bsp.config.feign.SendLetterServiceClient;
 import uk.gov.hmcts.reform.bsp.integrations.SlackClient;
 import uk.gov.hmcts.reform.bsp.models.StaleLetterResponse;
 import uk.gov.hmcts.reform.bsp.models.CheckPostedTaskResponse;
+import uk.gov.hmcts.reform.bsp.runner.ScheduleRunner;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.fail;
     "app.bulk-print-processing.processed-reports-retrieval-window=45m"}
 )
 class SendLetterServiceClientTest {
+
+    @MockitoBean
+    private ScheduleRunner scheduleRunner;
 
     @Autowired
     private SendLetterServiceClient client;
